@@ -4,11 +4,11 @@ Plugin loader from Octeon rewrite
 from importlib import import_module
 from logging import getLogger
 from glob import glob
-
+from telegram.ext import Updater
 from constants import ERROR, OK
 
 LOGGER = getLogger("ModuleLoader")
-def load_plugins():
+def load_plugins(updater: Updater):
     """
     Loads plugins.
     Returns list with dict
@@ -32,6 +32,7 @@ def load_plugins():
                 "commands":[]
             })
         else:
+            module.preload(updater, i)
             plugins.append({
                 "state":OK,
                 "name":name,

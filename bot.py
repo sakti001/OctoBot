@@ -13,8 +13,8 @@ import constants
 
 logging.basicConfig(level=logging.DEBUG)
 LOGGER = logging.getLogger("Octeon-Brain")
-PLUGINS = moduleloader.load_plugins()
 UPDATER = Updater(settings.TOKEN)
+PLUGINS = moduleloader.load_plugins(UPDATER)
 DISPATCHER = UPDATER.dispatcher
 COMMANDS = moduleloader.gen_commands(PLUGINS)
 CMDDOCS = moduleloader.generate_docs(PLUGINS)
@@ -24,11 +24,13 @@ def command_handle(bot: Bot, update: Update):
     """
     for command in COMMANDS:
         if update.message.text.startswith(command):
-            reply = COMMANDS[command](bot, update)
-            if reply[1] == constants.TEXT:
-                update.message.reply_text(
-                    reply[0]
-                )
+            commanddata = update.message.text.split()[0].split('@')
+            if (len(commanddata) > 1 and commanddata[1] == bot.username) or len(commanddata) == 1:
+                reply = COMMANDS[command](bot, update)
+                if reply[1] == constants.TEXT:
+                    update.message.reply_text(
+                        reply[0]
+                    )
 
 def start_command(_: Bot, update: Update):
     """/start command"""
