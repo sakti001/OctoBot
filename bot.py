@@ -36,6 +36,11 @@ def command_handle(bot: Bot, update: Update):
                         reply[0],
                         parse_mode="MARKDOWN"
                     )
+                elif reply[1] == constants.HTMLTXT:
+                    update.message.reply_text(
+                        reply[0],
+                        parse_mode="HTML"
+                    )
                 elif reply[1] == constants.NOTHING:
                     pass
                 elif reply[1] == constants.PHOTO:
