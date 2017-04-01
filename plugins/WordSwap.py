@@ -41,7 +41,7 @@ def wordsw(bot: Bot, update: Update):
 
 COMMANDS = [
     {
-        "command":"/s",
+        "command":"/s/",
         "function":wordsw,
         "description":"Swaps word!"
     }
