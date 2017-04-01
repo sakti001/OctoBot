@@ -31,8 +31,17 @@ def command_handle(bot: Bot, update: Update):
                     update.message.reply_text(
                         reply[0]
                     )
+                elif reply[1] == constants.MDTEXT:
+                    update.message.reply_text(
+                        reply[0],
+                        parse_mode="MARKDOWN"
+                    )
                 elif reply[1] == constants.NOTHING:
                     pass
+                elif reply[1] == constants.PHOTO:
+                    update.message.reply_photo(
+                        reply[0]
+                    )
                 else:
                     raise NotImplementedError("%s type is not ready... yet!" % reply[1])
 
