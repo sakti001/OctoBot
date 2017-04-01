@@ -6,7 +6,7 @@ import logging
 from telegram import Bot, Update
 from telegram.ext import Filters, MessageHandler, Updater
 
-import constants
+import constants # pylint: disable=E0401
 
 LOGGER = logging.getLogger("Word Swap Module")
 
@@ -17,7 +17,7 @@ def preload(updater: Updater, level):
     Even if you dont need it, you SHOULD put at least
     return None, otherwise your plugin wont load
     """
-    return    
+    return
 def wordsw(bot: Bot, update: Update):
     """Word swap command"""
     msg = update.message
