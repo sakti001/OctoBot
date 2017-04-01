@@ -27,7 +27,7 @@ def preload(updater: Updater, level):
     # You SHOULD specify group=level, otherwise bot may not work correctly
     updater.dispatcher.add_handler(MessageHandler(Filters.text, void), group=level)
 
-def helloworld(bot: Bot, update: Update):
+def helloworld(bot: Bot, update: Update): # pylint: disable=W0613
     """/helloworld command"""
     return "Hello World", constants.TEXT
 
