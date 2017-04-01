@@ -9,6 +9,10 @@ from telegram.ext import MessageHandler, Updater, Filters
 import constants # pylint: disable=E0401
 LOGGER = logging.getLogger("Example Module")
 def void(*_):
+    """
+    Simple function that can accept anything...
+    ...and do nothing
+    """
     return
 
 

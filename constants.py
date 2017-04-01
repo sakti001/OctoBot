@@ -7,3 +7,4 @@ OK = "OK"
 # Message types
 TEXT = "TEXT"
 PHOTO = "PIC"
+NOTHING = "NONE"

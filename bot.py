@@ -25,12 +25,16 @@ def command_handle(bot: Bot, update: Update):
     for command in COMMANDS:
         if update.message.text.startswith(command):
             commanddata = update.message.text.split()[0].split('@')
-            if (len(commanddata) > 1 and commanddata[1] == bot.username) or len(commanddata) == 1:
+            if (len(commanddata) == 2 and commanddata[1] == bot.username) or len(commanddata) == 1:
                 reply = COMMANDS[command](bot, update)
                 if reply[1] == constants.TEXT:
                     update.message.reply_text(
                         reply[0]
                     )
+                elif reply[1] == constants.NOTHING:
+                    pass
+                else:
+                    raise NotImplementedError("%s type is not ready... yet!" % reply[1])
 
 def start_command(_: Bot, update: Update):
     """/start command"""
@@ -50,10 +54,14 @@ def loaded(_: Bot, update: Update):
         else:
             message += "✅%s\n" % plugin["name"]
     update.message.reply_text(message)
-
+def error_handle(bot, update, error):
+    """Handles bad things"""
+    bot.sendMessage(chat_id=174781687,
+                    text='Update "{}" caused error "{}"'.format(update, error))
 DISPATCHER.add_handler(MessageHandler(Filters.command, command_handle))
 DISPATCHER.add_handler(CommandHandler("help", help_command), group=-1)
 DISPATCHER.add_handler(CommandHandler("/plugins", loaded), group=-1)
 DISPATCHER.add_handler(CommandHandler("start", start_command), group=-1)
+DISPATCHER.add_error_handler(error_handle)
 UPDATER.start_polling()
 UPDATER.idle()

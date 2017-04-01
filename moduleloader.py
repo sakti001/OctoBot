@@ -13,7 +13,7 @@ def load_plugins(updater: Updater):
     Loads plugins.
     Returns list with dict
     """
-    i = 0
+    i = -10000
     plugins = []
     for plugin in glob("plugins/*.py"):
         i += 1
