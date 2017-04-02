@@ -10,3 +10,6 @@ CHANNEL = 0
 REDDITID = ""
 REDDITSECRET = ""
 REDDITUA = ""
+# This is required for teletrack:
+# Put google analytics tracking code here
+TRACKCODE = ""

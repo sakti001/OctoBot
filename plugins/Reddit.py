@@ -4,8 +4,9 @@ Reddit module
 import logging
 
 from telegram import Bot, Update
-from praw import Reddit
-from settings import REDDITID, REDDITUA, REDDITSECRET # pylint: disable=E0611
+from praw import Reddit, exceptions
+from prawcore import exceptions
+from settings import REDDITID, REDDITUA, REDDITSECRET
 
 import constants # pylint: disable=E0401
 LOGGER = logging.getLogger("Reddit")
@@ -26,12 +27,15 @@ def posts(bot: Bot, update: Update, user, args): # pylint: disable=W0613
     """
     /r/subreddit
     """
-    sub = update.message.text.split("/")[2]
-    subreddit = REDDIT.subreddit(sub)
-    message = "Hot posts in <b>/r/%s</b>:\n\n" % sub
-    for post in subreddit.hot(limit=10):
-        message += ' • <a href="%s">%s</a>\n' % (post.shortlink, post.title)
-    return message, constants.HTMLTXT
+    try:
+        sub = update.message.text.split("/")[2]
+        subreddit = REDDIT.subreddit(sub)
+        message = "Hot posts in <b>/r/%s</b>:\n\n" % sub
+        for post in subreddit.hot(limit=10):
+            message += ' • <a href="%s">%s</a>\n' % (post.shortlink, post.title)
+        return message, constants.HTMLTXT
+    except exceptions.BadRequest:
+        pass
 
 COMMANDS = [
     {

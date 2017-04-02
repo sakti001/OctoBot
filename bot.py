@@ -14,6 +14,7 @@ from telegram.ext import (CommandHandler, Filters, InlineQueryHandler,
 import constants
 import moduleloader
 import settings
+import teletrack
 
 cleanr = re.compile('<.*?>')
 logging.basicConfig(level=logging.INFO)
@@ -35,6 +36,7 @@ def command_handle(bot: Bot, update: Update):
             commanddata = update.message.text.split()[0].split('@')
             if (len(commanddata) == 2 and commanddata[1] == bot.username) or len(commanddata) == 1:
                 reply = COMMANDS[command](bot, update, user, args)
+                TRACK.event(update.message.from_user.id, command, "command")
                 if reply[1] == constants.TEXT:
                     update.message.reply_text(
                         reply[0]
@@ -70,6 +72,7 @@ def inline_handle(bot: Bot, update: Update):
     for command in INLINE:
         if query.startswith(command):
             reply = INLINE[command](bot, update, user, args)
+            TRACK.event(update.message.from_user.id, command, "inline")
             if reply[1] == constants.TEXT:
                 result.append(InlineQueryResultArticle(
                     id=uuid4(),
@@ -116,6 +119,7 @@ def inline_handle(bot: Bot, update: Update):
                                switch_pm_parameter="help")
 def start_command(_: Bot, update: Update, args):
     """/start command"""
+    TRACK.event(update.message.from_user.id, "/start", "command")
     if len(args) != 1:
         update.message.reply_text("Hi! I am Octeon, an modular telegram bot by @OctoNezd!" +
                                   "\nI am is rewrite, and may be not stable, but if " +
@@ -140,6 +144,13 @@ def error_handle(bot, update, error):
     bot.sendMessage(chat_id=174781687,
                     text='Update "{}" caused error "{}"'.format(update, error))
 
+LOGGER.info("Checking Analytics status...")
+if settings.TRACKCODE != "":
+    LOGGER.info("Analytics is avaiable!")
+    TRACK = teletrack.tele_track(settings.TRACKCODE, "Octeon")
+else:
+    LOGGER.info("Analytics is NOT avaiable")
+    TRACK = teletrack.dummy_track()
 LOGGER.info("Adding handlers...")
 DISPATCHER.add_handler(MessageHandler(Filters.command, command_handle))
 DISPATCHER.add_handler(CommandHandler("help", help_command), group=-1)
