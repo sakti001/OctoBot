@@ -5,8 +5,9 @@ import logging
 import re
 from uuid import uuid4
 
-from telegram import (Bot, InlineQueryResultArticle, InputTextMessageContent,
-                      Update)
+from telegram import (Bot, InlineQueryResultArticle,
+                      InlineQueryResultCachedPhoto, InlineQueryResultPhoto,
+                      InputTextMessageContent, Update)
 from telegram.ext import (CommandHandler, Filters, InlineQueryHandler,
                           MessageHandler, Updater)
 
@@ -87,6 +88,18 @@ def inline_handle(bot: Bot, update: Update):
                     description=reply[0].split("\n")[0],
                     input_message_content=InputTextMessageContent(reply[0], parse_mode="MARKDOWN")
                 ))
+            elif reply[1] == constants.PHOTO:
+                if type(reply[0]) == str:
+                    result.append(InlineQueryResultPhoto(photo_url=reply[0],
+                                                         thumb_url=reply[0],
+                                                         id=uuid4()))
+                else:
+                    pic = bot.sendPhoto(chat_id=settings.CHANNEL, photo=reply[0])
+                    pic = pic.photo[0].file_id
+                    result.append(InlineQueryResultCachedPhoto(
+                        photo_file_id=pic,
+                        id=uuid4()
+                    ))
             else:
                 raise NotImplementedError("Reply type %s not supported" % reply[1])
     update.inline_query.answer(results=result,
@@ -96,8 +109,8 @@ def start_command(_: Bot, update: Update, args):
     """/start command"""
     if len(args) != 1:
         update.message.reply_text("Hi! I am Octeon, an modular telegram bot by @OctoNezd!" +
-                                "\nI am is rewrite, and may be not stable, but if " +
-                                "you love stability, use the stable version:@octeon_bot")
+                                  "\nI am is rewrite, and may be not stable, but if " +
+                                  "you love stability, use the stable version:@octeon_bot")
     else:
         update.message.reply_text(CMDDOCS)
 def help_command(_: Bot, update: Update):
