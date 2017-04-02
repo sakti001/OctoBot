@@ -159,5 +159,5 @@ DISPATCHER.add_handler(CommandHandler("start", start_command, pass_args=True), g
 DISPATCHER.add_handler(InlineQueryHandler(inline_handle))
 DISPATCHER.add_error_handler(error_handle)
 LOGGER.info("Start_polling")
-UPDATER.start_polling()
+UPDATER.start_polling(clean=True)
 UPDATER.idle()
