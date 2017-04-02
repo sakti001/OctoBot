@@ -72,7 +72,7 @@ def inline_handle(bot: Bot, update: Update):
     for command in INLINE:
         if query.startswith(command):
             reply = INLINE[command](bot, update, user, args)
-            TRACK.event(update.message.from_user.id, command, "inline")
+            TRACK.event(update.inline_query.from_user.id, command, "inline")
             if reply[1] == constants.TEXT:
                 result.append(InlineQueryResultArticle(
                     id=uuid4(),
