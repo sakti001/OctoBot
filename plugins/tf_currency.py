@@ -61,7 +61,7 @@ def tfcurr(bot: Bot, update: Update, user, args): # pylint: disable=W0613
     """
     data = IGetCurrencies_strg()["response"]["currencies"]
     message = ""
-    if len(args) == 0:
+    if len(args) < 2:
         message += "TF2 currency data:\n"
         for currency in data:
             cdata = data[currency]["price"]
@@ -71,7 +71,7 @@ def tfcurr(bot: Bot, update: Update, user, args): # pylint: disable=W0613
             return "I dont know %s" % args[1], constants.TEXT
         cdata = data[args[1]]["price"]
         message += "%s %s=%s %s\n" % (args[0], args[1], float(args[0]) * cdata["value"],
-                                  cdata["currency"])
+                                      cdata["currency"])
     message += "\nData from backpack.tf"
     return message, constants.TEXT
 
