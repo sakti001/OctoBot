@@ -55,13 +55,16 @@ def command_handle(bot: Bot, update: Update):
                     update.message.reply_photo(
                         reply[0]
                     )
+                elif reply[1] == constants.PHOTOWITHINLINEBTN:
+                    update.message.reply_photo(reply[0][0],
+                                               caption=reply[0][1],
+                                               reply_markup=reply[0][2])
                 else:
                     raise NotImplementedError("%s type is not ready... yet!" % reply[1])
 
 def inline_handle(bot: Bot, update: Update):
     query = update.inline_query.query
     args = query.split(" ")[1:]
-    print(args)
     user = update.inline_query.from_user
     result = []
     for command in INLINE:
@@ -100,6 +103,12 @@ def inline_handle(bot: Bot, update: Update):
                         photo_file_id=pic,
                         id=uuid4()
                     ))
+            elif reply[1] == constants.PHOTOWITHINLINEBTN:
+                result.append(InlineQueryResultPhoto(photo_url=reply[0][0],
+                                                     thumb_url=reply[0][0],
+                                                     id=uuid4(),
+                                                     caption=reply[0][1],
+                                                     reply_markup=reply[0][2]))
             else:
                 raise NotImplementedError("Reply type %s not supported" % reply[1])
     update.inline_query.answer(results=result,
