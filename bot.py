@@ -2,16 +2,19 @@
 Octeon rewrite
 """
 import logging
-
-from telegram import Bot, Update, InlineQueryResultArticle, InputTextMessageContent
-from telegram.ext import CommandHandler, Filters, MessageHandler, Updater, InlineQueryHandler
-
-import moduleloader
-import settings
-import constants
+import re
 from uuid import uuid4
 
+from telegram import (Bot, InlineQueryResultArticle, InputTextMessageContent,
+                      Update)
+from telegram.ext import (CommandHandler, Filters, InlineQueryHandler,
+                          MessageHandler, Updater)
 
+import constants
+import moduleloader
+import settings
+
+cleanr = re.compile('<.*?>')
 logging.basicConfig(level=logging.DEBUG)
 LOGGER = logging.getLogger("Octeon-Brain")
 UPDATER = Updater(settings.TOKEN)
@@ -56,7 +59,8 @@ def command_handle(bot: Bot, update: Update):
 
 def inline_handle(bot: Bot, update: Update):
     query = update.inline_query.query
-    args = query.split(" ")[2:]
+    args = query.split(" ")[1:]
+    print(args)
     user = update.inline_query.from_user
     result = []
     for command in INLINE:
@@ -66,8 +70,22 @@ def inline_handle(bot: Bot, update: Update):
                 result.append(InlineQueryResultArticle(
                     id=uuid4(),
                     title=command,
-                    description=reply[0],
+                    description=reply[0].split("\n")[0],
                     input_message_content=InputTextMessageContent(reply[0])
+                ))
+            elif reply[1] == constants.HTMLTXT:
+                result.append(InlineQueryResultArticle(
+                    id=uuid4(),
+                    title=command,
+                    description=re.sub(cleanr, "", reply[0].split("\n")[0]),
+                    input_message_content=InputTextMessageContent(reply[0], parse_mode="HTML")
+                ))
+            elif reply[1] == constants.MDTEXT:
+                result.append(InlineQueryResultArticle(
+                    id=uuid4(),
+                    title=command,
+                    description=reply[0].split("\n")[0],
+                    input_message_content=InputTextMessageContent(reply[0], parse_mode="MARKDOWN")
                 ))
             else:
                 raise NotImplementedError("Reply type %s not supported" % reply[1])
