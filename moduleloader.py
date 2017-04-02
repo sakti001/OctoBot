@@ -13,6 +13,7 @@ def load_plugins(updater: Updater):
     Loads plugins.
     Returns list with dict
     """
+    LOGGER.info("Loading modules")
     i = -10000
     plugins = []
     for plugin in glob("plugins/*.py"):
@@ -38,12 +39,14 @@ def load_plugins(updater: Updater):
                 "name":name,
                 "commands":module.COMMANDS
             })
+            LOGGER.info("Module %s loaded", name)
     return plugins
 
 def gen_commands(pluglist):
     """
     Creates list of commands and corresponding function
     """
+    LOGGER.info("Creating commands...")
     commands = {}
     for plugin in pluglist:
         for command in plugin["commands"]:
@@ -54,6 +57,7 @@ def gen_inline(pluglist):
     """
     Creates list of inline-compatible commands and corresponding function
     """
+    LOGGER.info("Generating inline commands...")
     commands = {}
     for plugin in pluglist:
         for command in plugin["commands"]:
@@ -67,6 +71,7 @@ def generate_docs(pluglist):
     commands
     """
     docs = ""
+    LOGGER.info("Generating /help command...")
     for plugin in pluglist:
         for command in plugin["commands"]:
             docs += "%s - %s\n" % (command["command"],

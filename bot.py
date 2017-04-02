@@ -16,7 +16,7 @@ import moduleloader
 import settings
 
 cleanr = re.compile('<.*?>')
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger("Octeon-Brain")
 UPDATER = Updater(settings.TOKEN)
 PLUGINS = moduleloader.load_plugins(UPDATER)
@@ -139,11 +139,14 @@ def error_handle(bot, update, error):
     """Handles bad things"""
     bot.sendMessage(chat_id=174781687,
                     text='Update "{}" caused error "{}"'.format(update, error))
+
+LOGGER.info("Adding handlers...")
 DISPATCHER.add_handler(MessageHandler(Filters.command, command_handle))
 DISPATCHER.add_handler(CommandHandler("help", help_command), group=-1)
 DISPATCHER.add_handler(CommandHandler("/plugins", loaded), group=-1)
 DISPATCHER.add_handler(CommandHandler("start", start_command, pass_args=True), group=-1)
 DISPATCHER.add_handler(InlineQueryHandler(inline_handle))
 DISPATCHER.add_error_handler(error_handle)
+LOGGER.info("Start_polling")
 UPDATER.start_polling()
 UPDATER.idle()
