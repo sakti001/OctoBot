@@ -15,7 +15,7 @@ class dummy_track:
     """
     def __init__(*_):
         return
-    
+
     def event(*_):
         return
 
@@ -36,25 +36,25 @@ class tele_track:
             google_token: Google Analytics Token
             user_agent:
         Example:
-            track = teletrack(track_id="UA-123456-1", user_agent="Mine awesome bot")
+            track = tele_track(track_id="UA-123456-1", user_agent="Mine awesome bot")
         """
         self.analyticsurl = ANALYTICS.replace("TRACKID", track_id)
         self.headers = {"User-Agent":user_agent}
 
-    def event(self, userid, event: str, type: str):
+    def event(self, userid, event: str, evtype: str):
         """
         Sends event(as pageview) to Google Analytics
         Args:
             -- userid: User ID
             -- event: a string with event name
-            -- type: event type
+            -- evtype: event type
         Example:
             ...
             track.event(update, "/start")
         """
-        aurl = self.analyticsurl % (userid, type, event)
+        aurl = self.analyticsurl % (userid, evtype, event)
         gan = get(aurl, headers=self.headers)
         if not str(gan.status_code).startswith("2"):
-            LOGGER.error("An error occured when contacting Google Analytics! Status code:%s", gan.status_code)
+            LOGGER.error("An error occured! Status code:%s", gan.status_code)
             LOGGER.error(gan.text)
         gan.close()
