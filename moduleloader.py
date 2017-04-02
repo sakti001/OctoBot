@@ -50,6 +50,17 @@ def gen_commands(pluglist):
             commands[command["command"]] = command["function"]
     return commands
 
+def gen_inline(pluglist):
+    """
+    Creates list of inline-compatible commands and corresponding function
+    """
+    commands = {}
+    for plugin in pluglist:
+        for command in plugin["commands"]:
+            if command["inline_support"]:
+                commands[command["command"]] = command["function"]
+    return commands
+
 def generate_docs(pluglist):
     """
     Generates documentation string for
