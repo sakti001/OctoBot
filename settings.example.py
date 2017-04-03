@@ -16,3 +16,12 @@ TRACKCODE = ""
 # Backpack.TF API Key.
 # Required for tf_currency plugin
 BPTFTOKEN = ""
+# This is Webhook Settings
+# You should use webhook because it is
+# better than polling telegram
+WEBHOOK_ON = False
+WEBHOOK_CERT = "cert.pem"
+WEBHOOK_KEY = "private.key"
+WEBHOOK_PORT = 8443
+WEBHOOK_URL_PATH = "TOKEN"
+WEBHOOK_URL = "https://example.com:8443/TOKEN"

@@ -159,5 +159,13 @@ DISPATCHER.add_handler(CommandHandler("start", start_command, pass_args=True), g
 DISPATCHER.add_handler(InlineQueryHandler(inline_handle))
 DISPATCHER.add_error_handler(error_handle)
 LOGGER.info("Start_polling")
-UPDATER.start_polling(clean=True)
-UPDATER.idle()
+if settings.WEBHOOK_ON:
+    UPDATER.start_webhook(listen='0.0.0.0',
+                          port=settings.WEBHOOK_PORT,
+                          url_path=settings.WEBHOOK_URL_PATH,
+                          key=settings.WEBHOOK_KEY,
+                          cert=settings.WEBHOOK_CERT,
+                          webhook_url=settings.WEBHOOK_URL)
+else:
+    UPDATER.start_polling(clean=True)
+    UPDATER.idle()
