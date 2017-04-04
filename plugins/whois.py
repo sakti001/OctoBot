@@ -15,7 +15,7 @@ owner = 174781687
 
 def whomstis(b: Bot, u: Update):
     with open("users.txt", "a") as f:
-        f.write("%s:%s" % (u.message.from_user.id,
+        f.write("%s:%s\n" % (u.message.from_user.id,
                            u.message.from_user.username)
                )
 
@@ -29,7 +29,7 @@ def preload(updater: Updater, level):
     LOGGER.debug("TEST")
     # Here is example of adding your own MessageHandler
     # You SHOULD specify group=level, otherwise bot may not work correctly
-    updater.dispatcher.add_handler(MessageHandler(Filters.text, whomstis), group=level)
+    updater.dispatcher.add_handler(MessageHandler(Filters.text, whomstis), group=-100)
 
 
 
