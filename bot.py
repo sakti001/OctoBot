@@ -122,8 +122,7 @@ def start_command(_: Bot, update: Update, args):
     TRACK.event(update.message.from_user.id, "/start", "command")
     if len(args) != 1:
         update.message.reply_text("Hi! I am Octeon, an modular telegram bot by @OctoNezd!" +
-                                  "\nI am is rewrite, and may be not stable, but if " +
-                                  "you love stability, use the stable version:@octeon_bot")
+                                  "\nI am is rewrite, and may be not stable!")
     else:
         update.message.reply_text(CMDDOCS)
 def help_command(_: Bot, update: Update):
