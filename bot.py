@@ -30,6 +30,8 @@ def command_handle(bot: Bot, update: Update):
     """
     Handles commands
     """
+    if update.message.from_user.id in BANNEDUSERS:
+        return
     for command in COMMANDS:
         if update.message.text.startswith(command):
             user = update.message.from_user
