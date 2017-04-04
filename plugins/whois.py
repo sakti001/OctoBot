@@ -15,7 +15,7 @@ owner = 174781687
 
 def whomstis(b: Bot, u: Update):
     with open("users.txt", 'r') as f:
-        if not u.message.from_user.id in f.read()
+        if not u.message.from_user.id in f.read():
             with open("users.txt", "a") as f:
                 f.write("%s:%s\n" % (u.message.from_user.id,
                                 u.message.from_user.username)
