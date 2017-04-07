@@ -25,3 +25,7 @@ WEBHOOK_KEY = "private.key"
 WEBHOOK_PORT = 8443
 WEBHOOK_URL_PATH = "TOKEN"
 WEBHOOK_URL = "https://example.com:8443/TOKEN"
+# Yandex Translation API
+# You can get your token from
+# https://tech.yandex.com/translate/
+YANDEX_TRANSLATION_TOKEN = ""

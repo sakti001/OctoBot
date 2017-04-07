@@ -72,8 +72,6 @@ def inline_handle(bot: Bot, update: Update):
     args = query.split(" ")[1:]
     user = update.inline_query.from_user
     result = []
-    if update.message.from_user.id in BANNEDUSERS:
-        return
     for command in INLINE:
         if query.startswith(command):
             reply = INLINE[command](bot, update, user, args)
