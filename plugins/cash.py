@@ -40,9 +40,9 @@ def money(_: Bot, update: Update, user, args):
                         args[-1].upper()
                     )
                     return data, constants.TEXT
-                elif not args[1] in currency['rates']:
+                elif not args[1].upper() in currency['rates']:
                     return "Unknown currency:{}".format(args[1]), constants.TEXT
-                elif not args[-1] in currency['rates']:
+                elif not args[-1].upper() in currency['rates']:
                     return "Unknown currency:{}".format(args[-1]), constants.TEXT
         else:
             return "Not enough data provided!", constants.TEXT
