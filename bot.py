@@ -7,7 +7,7 @@ from uuid import uuid4
 
 from telegram import (Bot, InlineQueryResultArticle,
                       InlineQueryResultCachedPhoto, InlineQueryResultPhoto,
-                      InputTextMessageContent, Update)
+                      InputTextMessageContent, Update, TelegramError)
 from telegram.ext import (CommandHandler, Filters, InlineQueryHandler,
                           MessageHandler, Updater)
 
@@ -127,9 +127,14 @@ def start_command(_: Bot, update: Update, args, user):
                                   "\nI am is rewrite, and may be not stable!")
     else:
         update.message.reply_text(CMDDOCS)
-def help_command(bot: Bot, update: Update, *_):
+def help_command(bot: Bot, update: Update, args, user):
     """/help command"""
-    return CMDDOCS, constants.TEXT
+    try:
+        bot.sendMessage(update.message.from_user.id, CMDDOCS)
+    except TelegramError:
+        return "PM me, so I can send you /help", constants.TEXT
+    else:
+        return "I PMed you /help", constants.TEXT
 COMMANDS["/help"] = help_command
 COMMANDS["/start"] = start_command
 def loaded(_: Bot, update: Update):
