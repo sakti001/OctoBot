@@ -37,7 +37,7 @@ def command_handle(bot: Bot, update: Update):
             user = update.message.from_user
             args = update.message.text.split(" ")[1:]
             commanddata = update.message.text.split()[0].split('@')
-            if (len(commanddata) == 2 and commanddata[1] == bot.username) or len(commanddata) == 1:
+            if (len(commanddata) >= 2 and commanddata[1] == bot.username) or len(commanddata) == 1:
                 reply = COMMANDS[command](bot, update, user, args)
                 TRACK.event(update.message.from_user.id, command, "command")
                 if reply[1] == constants.TEXT:
@@ -120,18 +120,18 @@ def inline_handle(bot: Bot, update: Update):
     update.inline_query.answer(results=result,
                                switch_pm_text="List commands",
                                switch_pm_parameter="help")
-def start_command(_: Bot, update: Update, args):
+def start_command(_: Bot, update: Update, args, user):
     """/start command"""
-    TRACK.event(update.message.from_user.id, "/start", "command")
     if len(args) != 1:
         update.message.reply_text("Hi! I am Octeon, an modular telegram bot by @OctoNezd!" +
                                   "\nI am is rewrite, and may be not stable!")
     else:
         update.message.reply_text(CMDDOCS)
-def help_command(_: Bot, update: Update):
+def help_command(bot: Bot, update: Update, *_):
     """/help command"""
-    update.message.reply_text(CMDDOCS)
-
+    return CMDDOCS, constants.TEXT
+COMMANDS["/help"] = help_command
+COMMANDS["/start"] = start_command
 def loaded(_: Bot, update: Update):
     """//plugins command"""
     message = "Plugins list:\n"
@@ -155,9 +155,7 @@ else:
     TRACK = teletrack.dummy_track()
 LOGGER.info("Adding handlers...")
 DISPATCHER.add_handler(MessageHandler(Filters.command, command_handle))
-DISPATCHER.add_handler(CommandHandler("help", help_command), group=-1)
 DISPATCHER.add_handler(CommandHandler("/plugins", loaded), group=-1)
-DISPATCHER.add_handler(CommandHandler("start", start_command, pass_args=True), group=-1)
 DISPATCHER.add_handler(InlineQueryHandler(inline_handle))
 DISPATCHER.add_error_handler(error_handle)
 if settings.WEBHOOK_ON:
