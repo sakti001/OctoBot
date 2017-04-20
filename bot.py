@@ -18,7 +18,7 @@ import teletrack
 
 cleanr = re.compile('<.*?>')
 logging.basicConfig(level=logging.INFO)
-BANNEDUSERS = [189229177]
+BANNEDUSERS = []
 LOGGER = logging.getLogger("Octeon-Brain")
 UPDATER = Updater(settings.TOKEN)
 PLUGINS = moduleloader.load_plugins(UPDATER)
@@ -33,7 +33,7 @@ def command_handle(bot: Bot, update: Update):
     if update.message.from_user.id in BANNEDUSERS:
         return
     for command in COMMANDS:
-        if update.message.text.startswith(command):
+        if update.message.text.startswith(command ):
             user = update.message.from_user
             args = update.message.text.split(" ")[1:]
             commanddata = update.message.text.split()[0].split('@')
@@ -73,7 +73,7 @@ def inline_handle(bot: Bot, update: Update):
     user = update.inline_query.from_user
     result = []
     for command in INLINE:
-        if query.startswith(command):
+        if query.startswith(command ):
             reply = INLINE[command](bot, update, user, args)
             TRACK.event(update.inline_query.from_user.id, command, "inline")
             if reply[1] == constants.TEXT:
