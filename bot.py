@@ -73,7 +73,7 @@ def inline_handle(bot: Bot, update: Update):
     user = update.inline_query.from_user
     result = []
     for command in INLINE:
-        if query.startswith(command ):
+        if query.startswith(command):
             reply = INLINE[command](bot, update, user, args)
             TRACK.event(update.inline_query.from_user.id, command, "inline")
             if reply[1] == constants.TEXT:
@@ -120,17 +120,18 @@ def inline_handle(bot: Bot, update: Update):
     update.inline_query.answer(results=result,
                                switch_pm_text="List commands",
                                switch_pm_parameter="help")
-def start_command(_: Bot, update: Update, args, user):
+def start_command(_: Bot, update: Update, user, args):
     """/start command"""
     if len(args) != 1:
-        update.message.reply_text("Hi! I am Octeon, an modular telegram bot by @OctoNezd!" +
-                                  "\nI am is rewrite, and may be not stable!")
+        return "Hi! I am Octeon, an modular telegram bot by @OctoNezd!" + \
+                                  "\nI am is rewrite, and may be not stable!", constants.TEXT
     else:
         update.message.reply_text(CMDDOCS)
-def help_command(bot: Bot, update: Update, args, user):
+def help_command(bot: Bot, update: Update, user, args):
     """/help command"""
     try:
         bot.sendMessage(update.message.from_user.id, CMDDOCS)
+        return None, constants.NOTHING
     except TelegramError:
         return "PM me, so I can send you /help", constants.TEXT
     else:
