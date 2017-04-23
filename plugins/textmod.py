@@ -82,7 +82,7 @@ def shout(bot: Bot, update: Update, user, args):
 def tm(_: Bot, update: Update, user, args):
     reply = update.message.reply_to_message
     if reply is not None:
-        if not reply.from_user.name == b.getMe().name:
+        if not reply.from_user.name == Bot.getMe().name:
             return reply.text + "™️️", constants.TEXT
 
 COMMANDS = [
