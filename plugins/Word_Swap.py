@@ -29,8 +29,8 @@ def wordsw(bot: Bot, update: Update, user, args):
                 txt = txt.split('/')
                 origword = txt[2]
                 swap = txt[3]
-                if len(origword) > 0 and len(origword) < 15:
-                    if len(swap) > 0 and len(swap) < 15:
+                if len(origword) > 0:
+                    if len(swap) > 0:
                         msg.reply_to_message.reply_text(
                             "Hello, {}\nDid you mean:\n{}".format(
                                 msg.reply_to_message.from_user.first_name,
