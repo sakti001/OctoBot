@@ -37,31 +37,35 @@ def command_handle(bot: Bot, update: Update):
             user = update.message.from_user
             args = update.message.text.split(" ")[1:]
             commanddata = update.message.text.split()[0].split('@')
+            if update.message.reply_to_message is None:
+                message = update.message
+            else:
+                message = update.message.reply_to_message
             if (len(commanddata) >= 2 and commanddata[1] == bot.username) or len(commanddata) == 1:
                 reply = COMMANDS[command](bot, update, user, args)
                 TRACK.event(update.message.from_user.id, command, "command")
                 if reply[1] == constants.TEXT:
-                    update.message.reply_text(
+                    message.reply_text(
                         reply[0]
                     )
                 elif reply[1] == constants.MDTEXT:
-                    update.message.reply_text(
+                    message.reply_text(
                         reply[0],
                         parse_mode="MARKDOWN"
                     )
                 elif reply[1] == constants.HTMLTXT:
-                    update.message.reply_text(
+                    message.reply_text(
                         reply[0],
                         parse_mode="HTML"
                     )
                 elif reply[1] == constants.NOTHING:
                     pass
                 elif reply[1] == constants.PHOTO:
-                    update.message.reply_photo(
+                    message.reply_photo(
                         reply[0]
                     )
                 elif reply[1] == constants.PHOTOWITHINLINEBTN:
-                    update.message.reply_photo(reply[0][0],
+                    message.reply_photo(reply[0][0],
                                                caption=reply[0][1],
                                                reply_markup=reply[0][2])
                 else:
