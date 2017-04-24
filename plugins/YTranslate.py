@@ -27,10 +27,10 @@ def translate(bot: Bot, update: Update, user, args): # pylint: disable=W0613
     """/tl"""
     if update.message.reply_to_message:
         if len(args) > 0:
-            url = YAURL + "&lang=%s" % args[0]
+            lang = args[0].lower()
         else:
-            url = YAURL + "&lang=en"
-        yandex = post(url + "&text=%s" % quote(update.message.reply_to_message.text)).json()
+            lang = "en"
+        yandex = post(YAURL, params={"text":update.message.reply_to_message.text, "lang":lang}).json()
         try:
             return yandex["lang"].upper() + "\n" + yandex["text"][0], constants.TEXT
         except KeyError:
