@@ -32,16 +32,19 @@ def command_handle(bot: Bot, update: Update):
     """
     if update.message.from_user.id in BANNEDUSERS:
         return
-    for command in COMMANDS:
-        if update.message.text.startswith(command ):
-            user = update.message.from_user
-            args = update.message.text.split(" ")[1:]
-            commanddata = update.message.text.split()[0].split('@')
-            if update.message.reply_to_message is None:
-                message = update.message
-            else:
-                message = update.message.reply_to_message
-            if (len(commanddata) >= 2 and commanddata[1] == bot.username) or len(commanddata) == 1:
+    commanddata = update.message.text.split()[0].split('@')
+    if (len(commanddata) >= 2 and commanddata[1] == bot.username) or (len(commanddata) == 1):
+        for command in COMMANDS:
+            state_only_command = update.message.text == command or update.message.text.startswith(command + " ")
+            state_word_swap = len(update.message.text.split("/")) > 2 and update.message.text.startswith(command)
+            state_mention_command = update.message.text.startswith(command + "@")
+            if state_only_command or state_word_swap or state_mention_command:
+                user = update.message.from_user
+                args = update.message.text.split(" ")[1:]
+                if update.message.reply_to_message is None:
+                    message = update.message
+                else:
+                    message = update.message.reply_to_message
                 reply = COMMANDS[command](bot, update, user, args)
                 TRACK.event(update.message.from_user.id, command, "command")
                 if reply[1] == constants.TEXT:
@@ -66,8 +69,8 @@ def command_handle(bot: Bot, update: Update):
                     )
                 elif reply[1] == constants.PHOTOWITHINLINEBTN:
                     message.reply_photo(reply[0][0],
-                                               caption=reply[0][1],
-                                               reply_markup=reply[0][2])
+                                                caption=reply[0][1],
+                                                reply_markup=reply[0][2])
                 else:
                     raise NotImplementedError("%s type is not ready... yet!" % reply[1])
 
