@@ -47,7 +47,9 @@ def command_handle(bot: Bot, update: Update):
                     message = update.message.reply_to_message
                 reply = COMMANDS[command](bot, update, user, args)
                 TRACK.event(update.message.from_user.id, command, "command")
-                if reply[1] == constants.TEXT:
+                if isinstance(reply, str):
+                    message.reply_text(reply)
+                elif reply[1] == constants.TEXT:
                     message.reply_text(
                         reply[0]
                     )
@@ -83,7 +85,14 @@ def inline_handle(bot: Bot, update: Update):
         if query.startswith(command):
             reply = INLINE[command](bot, update, user, args)
             TRACK.event(update.inline_query.from_user.id, command, "inline")
-            if reply[1] == constants.TEXT:
+            if isinstance(reply, str):
+                result.append(InlineQueryResultArticle(
+                    id=uuid4(),
+                    title=command,
+                    description=reply.split("\n")[0],
+                    input_message_content=InputTextMessageContent(reply)
+                ))
+            elif reply[1] == constants.TEXT:
                 result.append(InlineQueryResultArticle(
                     id=uuid4(),
                     title=command,
