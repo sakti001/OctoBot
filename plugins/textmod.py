@@ -17,7 +17,7 @@ for letter in ascii_letters:
 def preload(*_):
     return
 
-def vaporwave(b: Bot, u: Update, args):
+def vaporwave(b: Bot, u: Update, _, args):
     msg = ""
     for letter in " ".join(args):
         try:
