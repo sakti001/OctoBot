@@ -49,6 +49,8 @@ def command_handle(bot: Bot, update: Update):
                 TRACK.event(update.message.from_user.id, command, "command")
                 if isinstance(reply, str):
                     message.reply_text(reply)
+                elif reply is None:
+                    return
                 elif reply[1] == constants.TEXT:
                     message.reply_text(
                         reply[0]
