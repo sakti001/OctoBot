@@ -40,6 +40,7 @@ def command_handle(bot: Bot, update: Update):
             state_mention_command = update.message.text.startswith(command + "@")
             if state_only_command or state_word_swap or state_mention_command:
                 user = update.message.from_user
+                LOGGER.info("User %s requested %s.", user.username, update.message.text)
                 args = update.message.text.split(" ")[1:]
                 if update.message.reply_to_message is None:
                     message = update.message
