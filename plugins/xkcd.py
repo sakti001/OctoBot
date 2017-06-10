@@ -30,7 +30,7 @@ def xkcd(bot: Bot, update: Update, user, args): # pylint: disable=W0613
         if argument.isdigit():
             id = argument
         else:
-            queryresult = requests.get('https://relevantxkcd.appspot.com/process?action=xkcd&query='+quote(argument)).text
+            queryresult = requests.get('https://relevantxkcd.appspot.com/process?',params={"action":"xkcd","query":quote("gft")}).text
             id = queryresult.split(" ")[2].lstrip("\n")
     data = ""
     if id == -1:
@@ -42,14 +42,15 @@ def xkcd(bot: Bot, update: Update, user, args): # pylint: disable=W0613
             msg.reply_text("xkcd n.{} not found!".format(id))
             return None, constants.NOTHING
     msg.reply_photo(photo = data['img'])
-    msg.reply_text("*title:* {}\n*number:* {}\n*date*`(yyyy-mm-dd for christ's sake)`*:* {}-{}-{}\n*alt:* _{}_\n*link:* xkcd.com/{}".format(data['safe_title'],data['num'],
-        data['year'],data['month'].zfill(2),data['day'].zfill(2),data['alt'],data['num']), disable_web_page_preview=True, parse_mode=telegram.ParseMode.MARKDOWN)
+    data['month'] = data['month'].zfill(2)
+    data['day'] = data['day'].zfill(2)
+    msg.reply_text("*title:* %(safe_title)s\n*number:* %(num)s\n*date*`(yyyy-mm-dd for christ's sake)`*:* %(year)s-%(month)s-%(day)s\n*alt:* _%(alt)s_\n*link:* xkcd.com/%(num)s" % data,disable_web_page_preview=True, parse_mode=telegram.ParseMode.MARKDOWN)
     return None, constants.NOTHING
 COMMANDS = [
     {
         "command":"/xkcd",
         "function":xkcd,
-        "description":"Sends xkcd comics in the chat! usage: '/xkcd', '/xkcd <number>', or '/xkcd <query>'",
+        "description":"Sends xkcd comics in the chat!",
         "inline_support":True
     }
 ]
