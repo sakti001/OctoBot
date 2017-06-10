@@ -50,7 +50,7 @@ COMMANDS = [
     {
         "command":"/xkcd",
         "function":xkcd,
-        "description":"Sends xkcd comics in the chat!",
+        "description":"Sends xkcd comics in the chat! usage: '/xkcd', '/xkcd <number>', or '/xkcd <query>'",
         "inline_support":True
     }
 ]
