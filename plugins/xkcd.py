@@ -30,15 +30,16 @@ def xkcd(bot: Bot, update: Update, user, args): # pylint: disable=W0613
         if argument.isdigit():
             id = argument
         else:
-            queryresult = requests.get('https://relevantxkcd.appspot.com/process?',params={"action":"xkcd","query":quote("gft")}).text
+            queryresult = requests.get('https://relevantxkcd.appspot.com/process?',params={"action":"xkcd","query":quote(argument)}).text
             id = queryresult.split(" ")[2].lstrip("\n")
     data = ""
     if id == -1:
-        data = json.loads(requests.get("https://xkcd.com/info.0.json").text)
+        data = requests.get("https://xkcd.com/info.0.json").json()
     else:
-        try:
-            data = json.loads(requests.get("https://xkcd.com/{}/info.0.json".format(id)).text)
-        except json.JSONDecodeError:
+        r = requests.get("https://xkcd.com/{}/info.0.json".format(id))
+        if r.status_code == 200:
+            data = r.json()
+        else:
             msg.reply_text("xkcd n.{} not found!".format(id))
             return None, constants.NOTHING
     msg.reply_photo(photo = data['img'])
