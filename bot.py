@@ -33,8 +33,8 @@ CMDDOCS = moduleloader.generate_docs(PLUGINS)
 def tracker(_: Bot, update: Update, __, ___):
     reply = update.message.reply_to_message
     if reply:
-        if reply in TRACKER:
-            return "<pre>" + escape(pformat(TRACKER[reply])) + "</pre>", constants.HTMLTXT
+        if reply.message_id in TRACKER:
+            return "<pre>" + escape(pformat(TRACKER[reply.message_id])) + "</pre>", constants.HTMLTXT
         else:
             return "I dont remember sending this message..."
 
