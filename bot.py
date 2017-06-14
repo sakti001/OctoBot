@@ -4,6 +4,8 @@ Octeon rewrite
 import logging
 import re
 from uuid import uuid4
+from pprint import pformat
+from html import escape
 
 from telegram import (Bot, InlineQueryResultArticle,
                       InlineQueryResultCachedPhoto, InlineQueryResultPhoto,
@@ -16,8 +18,10 @@ import moduleloader
 import settings
 import teletrack
 
+global TRACKER
 cleanr = re.compile('<.*?>')
 logging.basicConfig(level=logging.INFO)
+TRACKER = {}
 BANNEDUSERS = []
 LOGGER = logging.getLogger("Octeon-Brain")
 UPDATER = Updater(settings.TOKEN)
@@ -26,10 +30,19 @@ DISPATCHER = UPDATER.dispatcher
 COMMANDS = moduleloader.gen_commands(PLUGINS)
 INLINE = moduleloader.gen_inline(PLUGINS)
 CMDDOCS = moduleloader.generate_docs(PLUGINS)
+def tracker(_: Bot, update: Update, __, ___):
+    reply = update.message.reply_to_message
+    if reply:
+        if reply in TRACKER:
+            return "<pre>" + escape(pformat(TRACKER[reply])) + "</pre>", constants.HTMLTXT
+        else:
+            return "I dont remember sending this message..."
+
 def command_handle(bot: Bot, update: Update):
     """
     Handles commands
     """
+    global TRACKER
     if update.message.from_user.id in BANNEDUSERS:
         return
     commanddata = update.message.text.split()[0].split('@')
@@ -39,6 +52,8 @@ def command_handle(bot: Bot, update: Update):
             state_word_swap = len(update.message.text.split("/")) > 2 and update.message.text.startswith(command)
             state_mention_command = update.message.text.startswith(command + "@")
             if state_only_command or state_word_swap or state_mention_command:
+                if len(TRACKER) > 100:
+                    TRACKER = {}
                 user = update.message.from_user
                 LOGGER.info("User %s requested %s.", user.username, update.message.text)
                 args = update.message.text.split(" ")[1:]
@@ -49,35 +64,43 @@ def command_handle(bot: Bot, update: Update):
                 reply = COMMANDS[command](bot, update, user, args)
                 TRACK.event(update.message.from_user.id, command, "command")
                 if isinstance(reply, str):
-                    message.reply_text(reply)
+                    msg = message.reply_text(reply)
                 elif reply is None:
                     return
                 elif reply[1] == constants.TEXT:
-                    message.reply_text(
+                    msg = message.reply_text(
                         reply[0]
                     )
                 elif reply[1] == constants.MDTEXT:
-                    message.reply_text(
+                    msg = message.reply_text(
                         reply[0],
                         parse_mode="MARKDOWN"
                     )
                 elif reply[1] == constants.HTMLTXT:
-                    message.reply_text(
+                    msg = message.reply_text(
                         reply[0],
                         parse_mode="HTML"
                     )
                 elif reply[1] == constants.NOTHING:
                     pass
                 elif reply[1] == constants.PHOTO:
-                    message.reply_photo(
+                    msg = message.reply_photo(
                         reply[0]
                     )
                 elif reply[1] == constants.PHOTOWITHINLINEBTN:
-                    message.reply_photo(reply[0][0],
+                    msg = message.reply_photo(reply[0][0],
                                                 caption=reply[0][1],
                                                 reply_markup=reply[0][2])
                 else:
-                    raise NotImplementedError("%s type is not ready... yet!" % reply[1])
+                    raise NotImplementedError("%s type is not implemented" % reply[1])
+                try:
+                    TRACKER[msg.message_id] = {
+                        "Requested by":update.message.from_user.name,
+                        "Username":update.message.from_user.username,
+                        "Command":update.message.text
+                    }
+                except UnboundLocalError:
+                    pass
 
 def inline_handle(bot: Bot, update: Update):
     query = update.inline_query.query
@@ -157,6 +180,7 @@ def help_command(bot: Bot, update: Update, user, args):
         return "I PMed you /help", constants.TEXT
 COMMANDS["/help"] = help_command
 COMMANDS["/start"] = start_command
+COMMANDS["/who_requested"] = tracker
 def loaded(_: Bot, update: Update):
     """//plugins command"""
     message = "Plugins list:\n"
