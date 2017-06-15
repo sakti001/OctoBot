@@ -105,8 +105,9 @@ def command_handle(bot: Bot, update: Update):
                 if "failed" in reply:
                     msdict = msg.to_dict()
                     msdict["chat_id"] = msg.chat_id
+                    msdict["user_id"] = msg.from_user.id
                     kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton("Delete this message", 
-                                                    callback_data="del:%(chat_id)s:%(message_id)s" % msdict)]])
+                                                    callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
                     msg.edit_reply_markup(reply_markup=kbrmrkup)
 
 def inline_handle(bot: Bot, update: Update):
@@ -189,8 +190,15 @@ def inlinebutton(bot, update):
     query = update.callback_query
     if query.data.startswith("del"):
         data = query.data.split(":")[1:]
-        bot.deleteMessage(data[0], data[1])
-        query.answer("Message deleted")
+        goodpeople = [int(data[2]), 174781687]
+        if data[0].startswith("-"):
+            for admin in bot.getChatAdministrators(data[0]):
+                goodpeople.append(int(admin.user.id))
+        if query.from_user.id in goodpeople:
+            bot.deleteMessage(data[0], data[1])
+            query.answer("Message deleted")
+        else:
+            query.answer("You are not the one who sent this command!")            
 
 COMMANDS["/help"] = help_command
 COMMANDS["/start"] = start_command
