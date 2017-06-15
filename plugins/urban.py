@@ -3,16 +3,16 @@ from telegram import Bot, Update
 from requests import get
 from html import escape
 import constants
-apiurl = "http://urbanscraper.herokuapp.com/define/%s"
+apiurl = "http://api.urbandictionary.com/v0/define"
 message = """
-Definition for %s by %s:
-%s
+Definition for <b>%(word)s</b> by %(author)s:
+%(definition)s
 
 Examples:
 <i>
-%s
+%(example)s
 </i>
-<a href="%s">Link to definition on Urban dictionary</a>
+<a href="%(permalink)s">Link to definition on Urban dictionary</a>
 """
 
 
@@ -23,19 +23,15 @@ def preload(*_):
 
 def urband(_: Bot, ___: Update, user, args):
     """/ud"""
-    definition = get(apiurl % " ".join(args)).json()
-    for item in definition:
-        definition[item] = escape(definition[item]).replace("\r", "\n")
-    if message in definition:
-        return definition["message"], constants.TEXT
-    else:
-        msg = message % (definition["term"],
-                         definition["author"],
-                         definition["definition"],
-                         definition["example"],
-                         definition["url"]
-                        )
+    definition = get(apiurl, params={
+        "term":" ".join(args)
+    }).json()
+    if definition["result_type"] == "exact":
+        definition = definition["list"][0]
+        msg = message % definition
         return msg, constants.HTMLTXT
+    else:
+        return "Nothing found!", constants.TEXT, "failed"        
 
 COMMANDS = [
     {
