@@ -10,6 +10,8 @@
 
 3. `pip3 install python-telegram-bot` - This is Bot API wrapper which Octeon use
 
+3. `pip3 install emoji praw requests` - Requirments for some modules
+
 ### Creating your own plugins
 
 See plugin/Example.py
