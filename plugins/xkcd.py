@@ -21,8 +21,7 @@ def preload(updater: Updater, level):
 def xkcd(bot: Bot, update: Update, user, args): # pylint: disable=W0613
     """/xkcd command"""
     msg = update.message
-    argument = msg.text.lstrip('/xkcd')
-    argument = argument.strip()
+    argument = " ".join(args)
     id = ""
     if not argument:
         id = -1
@@ -37,16 +36,14 @@ def xkcd(bot: Bot, update: Update, user, args): # pylint: disable=W0613
         data = requests.get("https://xkcd.com/info.0.json").json()
     else:
         r = requests.get("https://xkcd.com/{}/info.0.json".format(id))
-        if r.status_code == 200:
+        if r.ok:
             data = r.json()
         else:
-            msg.reply_text("xkcd n.{} not found!".format(id))
-            return None, constants.NOTHING
-    msg.reply_photo(photo = data['img'])
+            return "xkcd n.{} not found!".format(id), constants.TEXT, "failed"
+    #msg.reply_photo(photo = data['img']) Cause telegram makes preview of comic, we dont need it anymore
     data['month'] = data['month'].zfill(2)
     data['day'] = data['day'].zfill(2)
-    msg.reply_text("*title:* %(safe_title)s\n*number:* %(num)s\n*date*`(yyyy-mm-dd for christ's sake)`*:* %(year)s-%(month)s-%(day)s\n*alt:* _%(alt)s_\n*link:* xkcd.com/%(num)s" % data,disable_web_page_preview=True, parse_mode=telegram.ParseMode.MARKDOWN)
-    return None, constants.NOTHING
+    return "*title:* %(safe_title)s\n*number:* %(num)s\n*date*`(yyyy-mm-dd for christ's sake)`*:* %(year)s-%(month)s-%(day)s\n*alt:* _%(alt)s_\n*link:* xkcd.com/%(num)s" % data, constants.MDTEXT
 COMMANDS = [
     {
         "command":"/xkcd",
