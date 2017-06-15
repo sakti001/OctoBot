@@ -31,7 +31,7 @@ def cowsay(_: Bot, update: Update, user, args):
     args = " ".join(args)
     proc = Popen(['cowsay'], stdout=PIPE, stdin=PIPE)
     stdout = str(
-        proc.communicate(input=bytes(" ".join(args), 'utf-8'))[0], 'utf-8').split('\n')
+        proc.communicate(input=bytes(args, 'utf-8'))[0], 'utf-8').split('\n')
     font = ImageFont.truetype("plugins/CamingoCode-Regular.ttf", 12)
     width = []
     height_t = []
