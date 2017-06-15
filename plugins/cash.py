@@ -24,7 +24,7 @@ def money(_: Bot, update: Update, user, args):
     """/money"""
     args = update.message.text.split(" ")[1:]
     if args == []:
-        return "You havent supplied data.", constants.TEXT
+        return "You havent supplied data.", constants.TEXT, "failed"
     else:
         if len(args) >= 3:
             if len(args[1]) > 3 or len(args[2]) > 3:
@@ -41,11 +41,11 @@ def money(_: Bot, update: Update, user, args):
                     )
                     return data, constants.TEXT
                 elif not args[1].upper() in currency['rates']:
-                    return "Unknown currency:{}".format(args[1]), constants.TEXT
+                    return "Unknown currency:{}".format(args[1]), constants.TEXT, "failed"
                 elif not args[-1].upper() in currency['rates']:
-                    return "Unknown currency:{}".format(args[-1]), constants.TEXT
+                    return "Unknown currency:{}".format(args[-1]), constants.TEXT, "failed"
         else:
-            return "Not enough data provided!", constants.TEXT
+            return "Not enough data provided!", constants.TEXT, "failed"
 
 COMMANDS = [
     {

@@ -3,15 +3,16 @@ Octeon rewrite
 """
 import logging
 import re
-from uuid import uuid4
-from pprint import pformat
 from html import escape
+from pprint import pformat
+from uuid import uuid4
 
-from telegram import (Bot, InlineQueryResultArticle,
-                      InlineQueryResultCachedPhoto, InlineQueryResultPhoto,
-                      InputTextMessageContent, Update, TelegramError)
+from telegram import (Bot, InlineKeyboardButton, InlineKeyboardMarkup,
+                      InlineQueryResultArticle, InlineQueryResultCachedPhoto,
+                      InlineQueryResultPhoto, InputTextMessageContent,
+                      TelegramError, Update)
 from telegram.ext import (CommandHandler, Filters, InlineQueryHandler,
-                          MessageHandler, Updater)
+                          MessageHandler, Updater, CallbackQueryHandler)
 
 import constants
 import moduleloader
@@ -101,6 +102,12 @@ def command_handle(bot: Bot, update: Update):
                     }
                 except UnboundLocalError:
                     pass
+                if "failed" in reply:
+                    msdict = msg.to_dict()
+                    msdict["chat_id"] = msg.chat_id
+                    kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton("Delete this message", 
+                                                    callback_data="del:%(chat_id)s:%(message_id)s" % msdict)]])
+                    msg.edit_reply_markup(reply_markup=kbrmrkup)
 
 def inline_handle(bot: Bot, update: Update):
     query = update.inline_query.query
@@ -165,8 +172,7 @@ def inline_handle(bot: Bot, update: Update):
 def start_command(_: Bot, update: Update, user, args):
     """/start command"""
     if len(args) != 1:
-        return "Hi! I am Octeon, an modular telegram bot by @OctoNezd!" + \
-                                  "\nI am is rewrite, and may be not stable!", constants.TEXT
+        return "Hi! I am Octeon, an modular telegram bot by @OctoNezd! To see my features, type /help"
     else:
         update.message.reply_text(CMDDOCS)
 def help_command(bot: Bot, update: Update, user, args):
@@ -178,6 +184,14 @@ def help_command(bot: Bot, update: Update, user, args):
         return "PM me, so I can send you /help", constants.TEXT
     else:
         return "I PMed you /help", constants.TEXT
+
+def inlinebutton(bot, update):
+    query = update.callback_query
+    if query.data.startswith("del"):
+        data = query.data.split(":")[1:]
+        bot.deleteMessage(data[0], data[1])
+        query.answer("Message deleted")
+
 COMMANDS["/help"] = help_command
 COMMANDS["/start"] = start_command
 COMMANDS["/who_requested"] = tracker
@@ -190,6 +204,7 @@ def loaded(_: Bot, update: Update):
         else:
             message += "✅%s\n" % plugin["name"]
     update.message.reply_text(message)
+
 def error_handle(bot, update, error):
     """Handles bad things"""
     bot.sendMessage(chat_id=174781687,
@@ -206,6 +221,7 @@ LOGGER.info("Adding handlers...")
 DISPATCHER.add_handler(MessageHandler(Filters.command, command_handle))
 DISPATCHER.add_handler(CommandHandler("/plugins", loaded), group=-1)
 DISPATCHER.add_handler(InlineQueryHandler(inline_handle))
+DISPATCHER.add_handler(CallbackQueryHandler(inlinebutton))
 DISPATCHER.add_error_handler(error_handle)
 if settings.WEBHOOK_ON:
     LOGGER.info("Webhook is ON")

@@ -23,12 +23,12 @@ def lyrics(_: Bot, update: Update, user, args):
         try:
             lyrics = "\n".join(PyLyrics.getLyrics(song[0], song[1]).split("\n")[:20])
         except ValueError as e:
-            return "❌ Song %s not found :(" % song[1], constants.TEXT
+            return "❌ Song %s not found :(" % song[1], constants.TEXT, "failed"
         else:
             lyricstext = LYRICSINFO % (song[0].replace(" ", "_"), song[1].replace(" ", "_"))
             return lyrics + lyricstext, constants.MDTEXT
     else:
-        return "Invalid syntax!", constants.TEXT
+        return "Invalid syntax!", constants.TEXT, "failed"
 COMMANDS = [
     {
         "command":"/lyrics",

@@ -21,7 +21,7 @@ def steam(b: Bot, u: Update, user, args):
     if len(args) >= 1:
         account = getuser(args[0])
         if "response" in account:
-            return "Cant find this user!", constants.TEXT
+            return "Cant find this user!", constants.TEXT, "failed"
         else:
             message = ""
             user = account["profile"]
@@ -49,6 +49,8 @@ def steam(b: Bot, u: Update, user, args):
             ]
             markup = InlineKeyboardMarkup(keyboard)
             return [user["avatarFull"], message, markup], constants.PHOTOWITHINLINEBTN
+    else:
+        return "Custom link is not supplied!", constants.TEXT, "failed"
 
 COMMANDS = [
     {

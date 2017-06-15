@@ -20,11 +20,12 @@ def emojize(bot: Bot, update: Update, user, args): # pylint: disable=W0613
         og = og.replace(":fullmoonface:", ":full_moon_with_face:")
         emojized = emoji.emojize(og, True)
         if emojized == og:
-            return "Nothing would change! Use aliases from https://www.webpagefx.com/tools/emoji-cheat-sheet/ !"
+            return "Nothing would change! Use aliases from https://www.webpagefx.com/tools/emoji-cheat-sheet/ !", constants.TEXT, "failed"
         else:
             return emojized
     else:
         return "Nothing supplied."
+
 COMMANDS = [
     {
         "command":"/emojize",

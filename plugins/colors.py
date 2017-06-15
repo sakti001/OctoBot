@@ -17,7 +17,7 @@ def rgb(b: Bot, u: Update, user, args):
         try:
             usercolor = ImageColor.getrgb(color)
         except Exception:
-            return "Invalid Color Code supplied!", constants.TEXT
+            return "Invalid Color Code supplied!", constants.TEXT, "failed"
     elif args[0].startswith("0x"):
         if len(args) > 2:
             usercolor = int(args[0][2:], 16), int(

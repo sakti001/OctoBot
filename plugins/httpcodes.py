@@ -29,7 +29,7 @@ def preload(*_):
 def get_code(_: Bot, __: Update, ___, args): # pylint: disable=W0613
     """/get_code"""
     if len(args) == 0:
-        return "No status code passed!", constants.TEXT
+        return "No status code passed!", constants.TEXT, "failed"
     else:
         if len(args[0]) == 3:
             for code in CODES:
@@ -37,7 +37,7 @@ def get_code(_: Bot, __: Update, ___, args): # pylint: disable=W0613
                     return MESSAGE % code, constants.TEXT
             return "Cant find " + args[0], constants.TEXT
         else:
-            return "Invalid code passed:" + args[0], constants.TEXT
+            return "Invalid code passed:" + args[0], constants.TEXT, "failed"
 
 COMMANDS = [
     {
