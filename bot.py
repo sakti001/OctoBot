@@ -105,7 +105,7 @@ def command_handle(bot: Bot, update: Update):
                 if "failed" in reply:
                     msdict = msg.to_dict()
                     msdict["chat_id"] = msg.chat_id
-                    msdict["user_id"] = msg.from_user.id
+                    msdict["user_id"] = update.message.from_user.id
                     kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton("Delete this message", 
                                                     callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
                     msg.edit_reply_markup(reply_markup=kbrmrkup)
