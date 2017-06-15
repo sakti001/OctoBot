@@ -194,7 +194,7 @@ def inlinebutton(bot, update):
         if data[0].startswith("-"):
             for admin in bot.getChatAdministrators(data[0]):
                 goodpeople.append(int(admin.user.id))
-        if query.from_user.id in goodpeople:
+        if int(query.from_user.id) in goodpeople:
             bot.deleteMessage(data[0], data[1])
             query.answer("Message deleted")
         else:
