@@ -16,7 +16,7 @@ class message:
                  parse_mode=None,
                  failed=False):
         self.text = text
-        self.failed = fail
+        self.failed = failed
         self.photo = photo
         self.inline_keyboard = inline_keyboard
         self.parse_mode = parse_mode
