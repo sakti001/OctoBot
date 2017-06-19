@@ -190,7 +190,7 @@ def inlinebutton(bot, update):
     query = update.callback_query
     if query.data.startswith("del"):
         data = query.data.split(":")[1:]
-        goodpeople = [int(data[2]), 174781687]
+        goodpeople = [int(data[2]), settings.ADMIN]
         if data[0].startswith("-"):
             for admin in bot.getChatAdministrators(data[0]):
                 goodpeople.append(int(admin.user.id))
@@ -215,7 +215,7 @@ def loaded(_: Bot, update: Update):
 
 def error_handle(bot, update, error):
     """Handles bad things"""
-    bot.sendMessage(chat_id=174781687,
+    bot.sendMessage(chat_id=settings.ADMIN,
                     text='Update "{}" caused error "{}"'.format(update, error))
 
 LOGGER.info("Checking Analytics status...")

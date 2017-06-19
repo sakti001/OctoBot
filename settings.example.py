@@ -1,6 +1,9 @@
 """
 Settings file for Octeon-rewrite
 """
+# Your user ID
+ADMIN = 174781687
+# Bot token from botfather
 TOKEN = "PUTYOURTOKENHERE"
 # Octeon needs this channel to make inline images work
 # Put channel ID here
