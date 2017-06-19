@@ -99,14 +99,6 @@ def command_handle(bot: Bot, update: Update):
                                                     reply_markup=reply[0][2])
                     else:
                         raise NotImplementedError("%s type is not implemented" % reply[1])
-                    try:
-                        TRACKER[msg.message_id] = {
-                            "Requested by":update.message.from_user.name,
-                            "Username":update.message.from_user.username,
-                            "Command":update.message.text
-                        }
-                    except UnboundLocalError:
-                        pass
                     if "failed" in reply:
                         msdict = msg.to_dict()
                         msdict["chat_id"] = msg.chat_id
@@ -130,6 +122,14 @@ def command_handle(bot: Bot, update: Update):
                         kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton("Delete this message", 
                                                         callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
                         msg.edit_reply_markup(reply_markup=kbrmrkup)
+                try:
+                    TRACKER[msg.message_id] = {
+                        "Requested by":update.message.from_user.name,
+                        "Username":update.message.from_user.username,
+                        "Command":update.message.text
+                    }
+                except UnboundLocalError:
+                    pass
 
 def inline_handle(bot: Bot, update: Update):
     query = update.inline_query.query

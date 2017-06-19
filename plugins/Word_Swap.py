@@ -36,7 +36,6 @@ def wordsw(bot: Bot, update: Update, user, args):
                                 msg.reply_to_message.text.replace(origword, swap)
                         )
                         return octeon.message(text=text)
-    return None, constants.NOTHING
 
 COMMANDS = [
     {
