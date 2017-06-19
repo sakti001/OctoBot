@@ -5,6 +5,7 @@ PLUGINVERSION = 2
 plugin = octeon.Plugin()
 @plugin.command(command="/hi",
                 description="Says 'Hi, %username%'",
-                inline_supported=True)
+                inline_supported=True,
+                hidden=False)
 def hi(bot, update, user, args):
     return octeon.message(text="Hi, @%s" % user.username)
