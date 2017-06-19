@@ -3,6 +3,7 @@ Octeon rewrite
 """
 import logging
 import re
+import warnings
 from html import escape
 from pprint import pformat
 from uuid import uuid4
@@ -11,11 +12,12 @@ from telegram import (Bot, InlineKeyboardButton, InlineKeyboardMarkup,
                       InlineQueryResultArticle, InlineQueryResultCachedPhoto,
                       InlineQueryResultPhoto, InputTextMessageContent,
                       TelegramError, Update)
-from telegram.ext import (CommandHandler, Filters, InlineQueryHandler,
-                          MessageHandler, Updater, CallbackQueryHandler)
+from telegram.ext import (CallbackQueryHandler, CommandHandler, Filters,
+                          InlineQueryHandler, MessageHandler, Updater)
 
 import constants
 import moduleloader
+import octeon
 import settings
 import teletrack
 
@@ -64,51 +66,70 @@ def command_handle(bot: Bot, update: Update):
                     message = update.message.reply_to_message
                 reply = COMMANDS[command](bot, update, user, args)
                 TRACK.event(update.message.from_user.id, command, "command")
-                if isinstance(reply, str):
-                    msg = message.reply_text(reply)
-                elif reply is None:
-                    return
-                elif reply[1] == constants.TEXT:
-                    msg = message.reply_text(
-                        reply[0]
-                    )
-                elif reply[1] == constants.MDTEXT:
-                    msg = message.reply_text(
-                        reply[0],
-                        parse_mode="MARKDOWN"
-                    )
-                elif reply[1] == constants.HTMLTXT:
-                    msg = message.reply_text(
-                        reply[0],
-                        parse_mode="HTML"
-                    )
-                elif reply[1] == constants.NOTHING:
-                    pass
-                elif reply[1] == constants.PHOTO:
-                    msg = message.reply_photo(
-                        reply[0]
-                    )
-                elif reply[1] == constants.PHOTOWITHINLINEBTN:
-                    msg = message.reply_photo(reply[0][0],
-                                                caption=reply[0][1],
-                                                reply_markup=reply[0][2])
+                if not isinstance(reply, octeon.message):
+                    # Backwards compability
+                    LOGGER.warning("Old message reply format! Please update it to new one")
+                    if isinstance(reply, str):
+                        msg = message.reply_text(reply)
+                    elif reply is None:
+                        return
+                    elif reply[1] == constants.TEXT:
+                        msg = message.reply_text(
+                            reply[0]
+                        )
+                    elif reply[1] == constants.MDTEXT:
+                        msg = message.reply_text(
+                            reply[0],
+                            parse_mode="MARKDOWN"
+                        )
+                    elif reply[1] == constants.HTMLTXT:
+                        msg = message.reply_text(
+                            reply[0],
+                            parse_mode="HTML"
+                        )
+                    elif reply[1] == constants.NOTHING:
+                        pass
+                    elif reply[1] == constants.PHOTO:
+                        msg = message.reply_photo(
+                            reply[0]
+                        )
+                    elif reply[1] == constants.PHOTOWITHINLINEBTN:
+                        msg = message.reply_photo(reply[0][0],
+                                                    caption=reply[0][1],
+                                                    reply_markup=reply[0][2])
+                    else:
+                        raise NotImplementedError("%s type is not implemented" % reply[1])
+                    try:
+                        TRACKER[msg.message_id] = {
+                            "Requested by":update.message.from_user.name,
+                            "Username":update.message.from_user.username,
+                            "Command":update.message.text
+                        }
+                    except UnboundLocalError:
+                        pass
+                    if "failed" in reply:
+                        msdict = msg.to_dict()
+                        msdict["chat_id"] = msg.chat_id
+                        msdict["user_id"] = update.message.from_user.id
+                        kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton("Delete this message", 
+                                                        callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
+                        msg.edit_reply_markup(reply_markup=kbrmrkup)
                 else:
-                    raise NotImplementedError("%s type is not implemented" % reply[1])
-                try:
-                    TRACKER[msg.message_id] = {
-                        "Requested by":update.message.from_user.name,
-                        "Username":update.message.from_user.username,
-                        "Command":update.message.text
-                    }
-                except UnboundLocalError:
-                    pass
-                if "failed" in reply:
-                    msdict = msg.to_dict()
-                    msdict["chat_id"] = msg.chat_id
-                    msdict["user_id"] = update.message.from_user.id
-                    kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton("Delete this message", 
-                                                    callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
-                    msg.edit_reply_markup(reply_markup=kbrmrkup)
+                    if reply.photo:
+                        msg = message.reply_photo(reply.photo,
+                                                  caption=reply.text,
+                                                  reply_markup=reply.inline_keyboard)
+                    else:
+                        msg = message.reply_text(reply.text,
+                                                 parse_mode=reply.parse_mode,
+                                                 reply_markup=reply.inline_keyboard)
+                    if reply.failed:
+                        msdict = msg.to_dict()
+                        msdict["chat_id"] = msg.chat_id
+                        msdict["user_id"] = update.message.from_user.id
+                        kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton("Delete this message", 
+                                                        callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
+                        msg.edit_reply_markup(reply_markup=kbrmrkup)
 
 def inline_handle(bot: Bot, update: Update):
     query = update.inline_query.query
