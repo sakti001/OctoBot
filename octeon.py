@@ -12,6 +12,7 @@ class message:
     def __init__(self,
                  text="", 
                  photo=None, 
+                 file=None,
                  inline_keyboard=None, 
                  parse_mode=None,
                  failed=False):
@@ -20,8 +21,8 @@ class message:
         self.photo = photo
         self.inline_keyboard = inline_keyboard
         self.parse_mode = parse_mode
-        if photo and parse_mode:
-            raise TypeError("parse_mode and photo cant be used at same time!")
+        if (photo or file) and parse_mode:
+            raise TypeError("parse_mode and photo/file cant be used at same time!")
 
 class Plugin:
     """Octeon plugin base"""
