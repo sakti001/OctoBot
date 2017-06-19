@@ -194,18 +194,18 @@ def inline_handle(bot: Bot, update: Update):
 def start_command(_: Bot, update: Update, user, args):
     """/start command"""
     if len(args) != 1:
-        return "Hi! I am Octeon, an modular telegram bot by @OctoNezd! To see my features, type /help"
+        return octeon.message("Hi! I am Octeon, an modular telegram bot by @OctoNezd! To see my features, type /help")
     else:
-        update.message.reply_text(CMDDOCS)
+        return octeon.message(CMDDOCS)
 def help_command(bot: Bot, update: Update, user, args):
     """/help command"""
     try:
         bot.sendMessage(update.message.from_user.id, CMDDOCS)
         return None, constants.NOTHING
     except TelegramError:
-        return "PM me, so I can send you /help", constants.TEXT
+        return octeon.message("PM me, so I can send you /help")
     else:
-        return "I PMed you /help", constants.TEXT
+        return octeon.message("I PMed you /help")
 
 def inlinebutton(bot, update):
     query = update.callback_query
