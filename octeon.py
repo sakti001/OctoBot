@@ -28,12 +28,13 @@ class Plugin:
     def __init__(self):
         self.commands = []
     
-    def command(self, command, description, inline_supported=True):
+    def command(self, command, description="", inline_supported=True, hidden=False):
         def tags_decorator(func):
             self.commands.append({
                 "command":command,
                 "description":description,
                 "function":func,
-                "inline_support":inline_supported
+                "inline_support":inline_supported,
+                "hidden":hidden
             })
         return tags_decorator

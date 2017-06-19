@@ -87,6 +87,9 @@ def generate_docs(pluglist):
     LOGGER.info("Generating /help command...")
     for plugin in pluglist:
         for command in plugin["commands"]:
+            if "hidden" in command:
+                if command["hidden"]:
+                    continue
             docs += "%s - %s\n" % (command["command"],
                                    command["description"])
     return docs
