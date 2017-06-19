@@ -33,13 +33,26 @@ def load_plugins(updater: Updater):
                 "commands":[]
             })
         else:
-            module.preload(updater, i)
-            plugins.append({
-                "state":OK,
-                "name":name,
-                "commands":module.COMMANDS
-            })
-            LOGGER.info("Module %s loaded", name)
+            try:
+                module.PLUGINVERSION
+            except AttributeError:
+                # Working with outdated plugins. 
+                module.preload(updater, i)
+                plugins.append({
+                    "state":OK,
+                    "name":name,
+                    "commands":module.COMMANDS
+                })
+                LOGGER.info("Module %s loaded", name)
+                LOGGER.warning("Module %s is outdated!", name)
+            else:
+                # Working with new plugins
+                plugins.append({
+                    "state":OK,
+                    "name":name,
+                    "commands":module.plugin.commands
+                })
+                LOGGER.info("Module %s loaded", name)
     return plugins
 
 def gen_commands(pluglist):
