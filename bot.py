@@ -113,6 +113,10 @@ def command_handle(bot: Bot, update: Update):
                         msg = message.reply_photo(reply.photo,
                                                   caption=reply.text,
                                                   reply_markup=reply.inline_keyboard)
+                    elif reply.file:
+                        msg = message.reply_document(document=reply.file,
+                                                     caption=reply.text,
+                                                     reply_markup=reply.inline_keyboard)
                     else:
                         msg = message.reply_text(reply.text,
                                                  parse_mode=reply.parse_mode,
@@ -142,54 +146,59 @@ def inline_handle(bot: Bot, update: Update):
         if query.startswith(command):
             reply = INLINE[command](bot, update, user, args)
             TRACK.event(update.inline_query.from_user.id, command, "inline")
-            if isinstance(reply, str):
-                result.append(InlineQueryResultArticle(
-                    id=uuid4(),
-                    title=command,
-                    description=reply.split("\n")[0],
-                    input_message_content=InputTextMessageContent(reply)
-                ))
-            elif reply[1] == constants.TEXT:
-                result.append(InlineQueryResultArticle(
-                    id=uuid4(),
-                    title=command,
-                    description=reply[0].split("\n")[0],
-                    input_message_content=InputTextMessageContent(reply[0])
-                ))
-            elif reply[1] == constants.HTMLTXT:
-                result.append(InlineQueryResultArticle(
-                    id=uuid4(),
-                    title=command,
-                    description=re.sub(cleanr, "", reply[0].split("\n")[0]),
-                    input_message_content=InputTextMessageContent(reply[0], parse_mode="HTML")
-                ))
-            elif reply[1] == constants.MDTEXT:
-                result.append(InlineQueryResultArticle(
-                    id=uuid4(),
-                    title=command,
-                    description=reply[0].split("\n")[0],
-                    input_message_content=InputTextMessageContent(reply[0], parse_mode="MARKDOWN")
-                ))
-            elif reply[1] == constants.PHOTO:
-                if type(reply[0]) == str:
-                    result.append(InlineQueryResultPhoto(photo_url=reply[0],
-                                                         thumb_url=reply[0],
-                                                         id=uuid4()))
-                else:
-                    pic = bot.sendPhoto(chat_id=settings.CHANNEL, photo=reply[0])
-                    pic = pic.photo[0].file_id
-                    result.append(InlineQueryResultCachedPhoto(
-                        photo_file_id=pic,
-                        id=uuid4()
+            if reply is None:
+                return
+            if isinstance(reply, octeon.message):
+                if isinstance(reply, str):
+                    result.append(InlineQueryResultArticle(
+                        id=uuid4(),
+                        title=command,
+                        description=reply.split("\n")[0],
+                        input_message_content=InputTextMessageContent(reply)
                     ))
-            elif reply[1] == constants.PHOTOWITHINLINEBTN:
-                result.append(InlineQueryResultPhoto(photo_url=reply[0][0],
-                                                     thumb_url=reply[0][0],
-                                                     id=uuid4(),
-                                                     caption=reply[0][1],
-                                                     reply_markup=reply[0][2]))
+                elif reply[1] == constants.TEXT:
+                    result.append(InlineQueryResultArticle(
+                        id=uuid4(),
+                        title=command,
+                        description=reply[0].split("\n")[0],
+                        input_message_content=InputTextMessageContent(reply[0])
+                    ))
+                elif reply[1] == constants.HTMLTXT:
+                    result.append(InlineQueryResultArticle(
+                        id=uuid4(),
+                        title=command,
+                        description=re.sub(cleanr, "", reply[0].split("\n")[0]),
+                        input_message_content=InputTextMessageContent(reply[0], parse_mode="HTML")
+                    ))
+                elif reply[1] == constants.MDTEXT:
+                    result.append(InlineQueryResultArticle(
+                        id=uuid4(),
+                        title=command,
+                        description=reply[0].split("\n")[0],
+                        input_message_content=InputTextMessageContent(reply[0], parse_mode="MARKDOWN")
+                    ))
+                elif reply[1] == constants.PHOTO:
+                    if type(reply[0]) == str:
+                        result.append(InlineQueryResultPhoto(photo_url=reply[0],
+                                                            thumb_url=reply[0],
+                                                            id=uuid4()))
+                    else:
+                        pic = bot.sendPhoto(chat_id=settings.CHANNEL, photo=reply[0])
+                        pic = pic.photo[0].file_id
+                        result.append(InlineQueryResultCachedPhoto(
+                            photo_file_id=pic,
+                            id=uuid4()
+                        ))
+                elif reply[1] == constants.PHOTOWITHINLINEBTN:
+                    result.append(InlineQueryResultPhoto(photo_url=reply[0][0],
+                                                        thumb_url=reply[0][0],
+                                                        id=uuid4(),
+                                                        caption=reply[0][1],
+                                                        reply_markup=reply[0][2]))
+                else:
+                    raise NotImplementedError("Reply type %s not supported" % reply[1])
             else:
-                raise NotImplementedError("Reply type %s not supported" % reply[1])
+                return
     update.inline_query.answer(results=result,
                                switch_pm_text="List commands",
                                switch_pm_parameter="help")

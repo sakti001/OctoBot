@@ -17,6 +17,7 @@ class message:
                  parse_mode=None,
                  failed=False):
         self.text = text
+        self.file = file
         self.failed = failed
         self.photo = photo
         self.inline_keyboard = inline_keyboard
@@ -30,7 +31,7 @@ class Plugin:
         self.commands = []
     
     def command(self, command, description="", inline_supported=True, hidden=False):
-        def tags_decorator(func):
+        def decorator(func):
             self.commands.append({
                 "command":command,
                 "description":description,
@@ -38,4 +39,4 @@ class Plugin:
                 "inline_support":inline_supported,
                 "hidden":hidden
             })
-        return tags_decorator
+        return decorator
