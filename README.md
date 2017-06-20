@@ -1,4 +1,5 @@
 # Octeon
+[![Documentation Status](https://readthedocs.org/projects/octeon/badge/?version=latest)](http://octeon.readthedocs.io/en/latest/?badge=latest)
 ## A modular telegram bot
 ### Installation
 

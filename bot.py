@@ -283,22 +283,24 @@ if settings.TRACKCODE != "":
 else:
     LOGGER.warning("Analytics is NOT avaiable")
     TRACK = teletrack.dummy_track()
-LOGGER.info("Adding handlers...")
-DISPATCHER.add_handler(MessageHandler(Filters.text, onmessage_handle))
-DISPATCHER.add_handler(MessageHandler(Filters.command, command_handle))
-DISPATCHER.add_handler(CommandHandler("/plugins", loaded), group=-1)
-DISPATCHER.add_handler(InlineQueryHandler(inline_handle))
-DISPATCHER.add_handler(CallbackQueryHandler(inlinebutton))
-DISPATCHER.add_error_handler(error_handle)
-if settings.WEBHOOK_ON:
-    LOGGER.info("Webhook is ON")
-    UPDATER.start_webhook(listen='0.0.0.0',
-                          port=settings.WEBHOOK_PORT,
-                          url_path=settings.WEBHOOK_URL_PATH,
-                          key=settings.WEBHOOK_KEY,
-                          cert=settings.WEBHOOK_CERT,
-                          webhook_url=settings.WEBHOOK_URL)
-else:
-    LOGGER.info("Webhook is OFF")
-    UPDATER.start_polling(clean=True)
-    UPDATER.idle()
+
+if __name__ == '__main__':
+    LOGGER.info("Adding handlers...")
+    DISPATCHER.add_handler(MessageHandler(Filters.text, onmessage_handle))
+    DISPATCHER.add_handler(MessageHandler(Filters.command, command_handle))
+    DISPATCHER.add_handler(CommandHandler("/plugins", loaded), group=-1)
+    DISPATCHER.add_handler(InlineQueryHandler(inline_handle))
+    DISPATCHER.add_handler(CallbackQueryHandler(inlinebutton))
+    DISPATCHER.add_error_handler(error_handle)
+    if settings.WEBHOOK_ON:
+        LOGGER.info("Webhook is ON")
+        UPDATER.start_webhook(listen='0.0.0.0',
+                            port=settings.WEBHOOK_PORT,
+                            url_path=settings.WEBHOOK_URL_PATH,
+                            key=settings.WEBHOOK_KEY,
+                            cert=settings.WEBHOOK_CERT,
+                            webhook_url=settings.WEBHOOK_URL)
+    else:
+        LOGGER.info("Webhook is OFF")
+        UPDATER.start_polling(clean=True)
+        UPDATER.idle()
