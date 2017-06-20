@@ -7,7 +7,6 @@ Octeon is modular telegram bot.
 Eh, I dont know what else can I say about it.
 
 ## Examples
-
 ### Handling commands
 ```
 import octeon
@@ -21,7 +20,6 @@ def hi(bot, update, user, args):
     return octeon.message(text="Hi, @%s" % user.username)
 
 ```
-
 Ok, now lets tear down this thing:
 
 * `import octeon` - imports various stuff which you would need
@@ -63,4 +61,16 @@ def echo(bot, update):
 
 * `@plugin.message` - this is decorator which used for command. Lets look what inside this thing!
     * `regex=".*"` - if following regex will match in any new message, Octeon will call this function. Regex in example matches every message
+
+## Other stuff you should know
+### octeon.message
+
+Arguments:
+
+* `text=""` - Text to send(or caption in case if file or photo is not `None`)
+* `photo=None` - Photo to send. Use a file-like object or pass a URL string
+* `file=None` - File to send. Use a file-like object or pass a URL string
+* `inline_keyboard=None` - Inline Keyboard to send with message. See [InlineKeyboardMarkup](http://python-telegram-bot.readthedocs.io/en/latest/telegram.inlinekeyboardmarkup.html)
+* `parse_mode=None` - Parse mode for text. See [Formatting Options](https://core.telegram.org/bots/api#formatting-options)
+* `failed=False` - If some process failed(like if there is no results for some search query), make it True and Octeon will add Inline Keyboard with "Delete message" button
 
