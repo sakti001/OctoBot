@@ -29,6 +29,7 @@ class Plugin:
     """Octeon plugin base"""
     def __init__(self):
         self.commands = []
+        self.handlers = []
     
     def command(self, command, description="", inline_supported=True, hidden=False):
         def decorator(func):
@@ -38,5 +39,17 @@ class Plugin:
                 "function":func,
                 "inline_support":inline_supported,
                 "hidden":hidden
+            })
+        return decorator
+    
+    def message(self, regex:str):
+        """
+        Pass regex pattern for your function
+        Disclaimer: this may work in Octeon-Discord
+        """
+        def decorator(func):
+            self.handlers.append({
+                "regex":regex,
+                "function":func,
             })
         return decorator

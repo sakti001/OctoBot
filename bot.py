@@ -32,6 +32,7 @@ PLUGINS = moduleloader.load_plugins(UPDATER)
 DISPATCHER = UPDATER.dispatcher
 COMMANDS = moduleloader.gen_commands(PLUGINS)
 INLINE = moduleloader.gen_inline(PLUGINS)
+REGEXHAND = moduleloader.gen_messages(PLUGINS)
 CMDDOCS = moduleloader.generate_docs(PLUGINS)
 def tracker(_: Bot, update: Update, __, ___):
     reply = update.message.reply_to_message
@@ -232,6 +233,31 @@ def inlinebutton(bot, update):
         else:
             query.answer("You are not the one who sent this command!")            
 
+def onmessage_handle(bot, update):
+    for regex in REGEXHAND:
+        if re.match(regex, update.message.text):
+            reply = REGEXHAND[regex](bot, update)
+            message = update.message
+            if reply.photo:
+                msg = message.reply_photo(reply.photo,
+                                            caption=reply.text,
+                                            reply_markup=reply.inline_keyboard)
+            elif reply.file:
+                msg = message.reply_document(document=reply.file,
+                                                caption=reply.text,
+                                                reply_markup=reply.inline_keyboard)
+            else:
+                msg = message.reply_text(reply.text,
+                                            parse_mode=reply.parse_mode,
+                                            reply_markup=reply.inline_keyboard)
+            if reply.failed:
+                msdict = msg.to_dict()
+                msdict["chat_id"] = msg.chat_id
+                msdict["user_id"] = update.message.from_user.id
+                kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton("Delete this message", 
+                                                callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
+                msg.edit_reply_markup(reply_markup=kbrmrkup)
+
 COMMANDS["/help"] = help_command
 COMMANDS["/start"] = start_command
 COMMANDS["/who_requested"] = tracker
@@ -258,6 +284,7 @@ else:
     LOGGER.warning("Analytics is NOT avaiable")
     TRACK = teletrack.dummy_track()
 LOGGER.info("Adding handlers...")
+DISPATCHER.add_handler(MessageHandler(Filters.text, onmessage_handle))
 DISPATCHER.add_handler(MessageHandler(Filters.command, command_handle))
 DISPATCHER.add_handler(CommandHandler("/plugins", loaded), group=-1)
 DISPATCHER.add_handler(InlineQueryHandler(inline_handle))

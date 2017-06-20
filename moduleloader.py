@@ -50,7 +50,8 @@ def load_plugins(updater: Updater):
                 plugins.append({
                     "state":OK,
                     "name":name,
-                    "commands":module.plugin.commands
+                    "commands":module.plugin.commands,
+                    "msghandles":module.plugin.handlers
                 })
                 LOGGER.info("Module %s loaded", name)
     return plugins
@@ -77,6 +78,15 @@ def gen_inline(pluglist):
             if command["inline_support"]:
                 commands[command["command"]] = command["function"]
     return commands
+
+def gen_messages(pluglist):
+    LOGGER.info("Generating message hadnlers")
+    regexes = {}
+    for plugin in pluglist:
+        if "msghandles" in plugin:
+            for handle in plugin["msghandles"]:
+                regexes[handle["regex"]] = handle["function"]
+    return regexes
 
 def generate_docs(pluglist):
     """
