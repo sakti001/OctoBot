@@ -16,7 +16,6 @@ def downloadmoney(*_):
     """YES! You can download money!"""
     money = loads(str(urlopen('http://api.fixer.io/latest').read(), 'utf-8'))
     money['rates']['EUR'] = 1
-    # Too lazy 4 not eval'ing it
     return money
 
 
@@ -35,8 +34,8 @@ def money(_: Bot, update: Update, user, args):
                     data = "{} {} = {} {}\nData from fixer.io".format(
                         args[0].upper(),
                         args[1],
-                        int(args[0]) / int(currency['rates'][args[1].upper()]
-                                          ) * int(currency['rates'][args[-1].upper()]),
+                        round(float(args[0]) / int(currency['rates'][args[1].upper()]
+                                          ) * int(currency['rates'][args[-1].upper()]), 2).,
                         args[-1].upper()
                     )
                     return data, constants.TEXT
