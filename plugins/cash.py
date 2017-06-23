@@ -5,7 +5,7 @@ from pickle import dump, load
 from telegram import Bot, Update
 from telegram.ext import CommandHandler, Updater
 
-import constants
+import constants, octeon
 from urllib.request import urlopen
 def preload(*_):
     """We dont need preload here"""
@@ -31,14 +31,14 @@ def money(_: Bot, update: Update, user, args):
             else:
                 currency = downloadmoney()
                 if args[1].upper() in currency['rates'] and args[-1].upper() in currency['rates']:
+                    t = float(args[0]) / int(currency['rates'][args[1].upper()])
                     data = "{} {} = {} {}\nData from fixer.io".format(
                         args[0].upper(),
                         args[1],
-                        round(float(args[0]) / int(currency['rates'][args[1].upper()]
-                                          ) * int(currency['rates'][args[-1].upper()]), 2).,
+                        round(t * int(currency['rates'][args[-1].upper()]), 2),
                         args[-1].upper()
                     )
-                    return data, constants.TEXT
+                    return octeon.message(data)
                 elif not args[1].upper() in currency['rates']:
                     return "Unknown currency:{}".format(args[1]), constants.TEXT, "failed"
                 elif not args[-1].upper() in currency['rates']:
