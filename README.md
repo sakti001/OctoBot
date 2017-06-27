@@ -15,6 +15,4 @@
 
 ### Creating your own plugins
 
-See plugin/Example.py
-
-It is base plugin, and has a lot of comments to get you started
+[Read the docs](http://octeon.readthedocs.io/)
