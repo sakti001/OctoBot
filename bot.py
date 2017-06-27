@@ -49,6 +49,8 @@ def command_handle(bot: Bot, update: Update):
     global TRACKER
     if update.message.from_user.id in BANNEDUSERS:
         return
+    if update.message.reply_to_message and update.message.reply_to_message.photo:
+        update.message.reply_to_message.text = update.message.reply_to_message.caption
     commanddata = update.message.text.split()[0].split('@')
     if (len(commanddata) >= 2 and commanddata[1] == bot.username) or (len(commanddata) == 1):
         for command in COMMANDS:
