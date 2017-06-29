@@ -1,56 +1,41 @@
-"""Cash"""
-from json import loads
-from pickle import dump, load
+import requests
 
-from telegram import Bot, Update
-from telegram.ext import CommandHandler, Updater
+import octeon
 
-import constants, octeon
-from urllib.request import urlopen
-def preload(*_):
-    """We dont need preload here"""
-    return
+PLUGINVERSION = 2
+# Always name this variable as `plugin`
+# If you dont, module loader will fail to load the plugin!
+plugin = octeon.Plugin()
+CURR_TEMPLATE = """
+%s %s = %s %s
 
-
-def downloadmoney(*_):
-    """YES! You can download money!"""
-    money = loads(str(urlopen('http://api.fixer.io/latest').read(), 'utf-8'))
-    money['rates']['EUR'] = 1
-    return money
-
-
-def money(_: Bot, update: Update, user, args):
-    """/money"""
-    args = update.message.text.split(" ")[1:]
-    if args == []:
-        return "You havent supplied data.", constants.TEXT, "failed"
+%s %s
+Data from Yahoo Finance
+"""
+@plugin.command(command="/cash",
+                description="Converts currency",
+                inline_supported=True,
+                hidden=False)
+def currency(bot, update, user, args):
+    if len(args) < 3:
+        return octeon.message(text="Not enough arguments! Example:<code>/cash 100 RUB USD</code>",
+                              parse_mode="HTML",
+                              failed=True)
     else:
-        if len(args) >= 3:
-            if len(args[1]) > 3 or len(args[2]) > 3:
-                return "Bad currency data!", constants.TEXT
-            else:
-                currency = downloadmoney()
-                if args[1].upper() in currency['rates'] and args[-1].upper() in currency['rates']:
-                    t = float(args[0]) / int(currency['rates'][args[1].upper()])
-                    data = "{} {} = {} {}\nData from fixer.io".format(
-                        args[0].upper(),
-                        args[1],
-                        round(t * int(currency['rates'][args[-1].upper()]), 2),
-                        args[-1].upper()
-                    )
-                    return octeon.message(data)
-                elif not args[1].upper() in currency['rates']:
-                    return "Unknown currency:{}".format(args[1]), constants.TEXT, "failed"
-                elif not args[-1].upper() in currency['rates']:
-                    return "Unknown currency:{}".format(args[-1]), constants.TEXT, "failed"
+        rate = requests.get(
+            "https://query.yahooapis.com/v1/public/yql?format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback=",
+            params={
+                "q":'select * from yahoo.finance.xchange where pair in ("%s")' % (args[1] + args[-1])
+            }
+        ).json()["query"]["results"]["rate"]
+        if rate["Name"] == "N/A":
+            return octeon.message('Bad currency name', failed=True)
         else:
-            return "Not enough data provided!", constants.TEXT, "failed"
-
-COMMANDS = [
-    {
-        "command":"/cash",
-        "function":money,
-        "description":"Converts money. Example: /cash 100 RUB USD",
-        "inline_support": True
-    }
-]
+            return octeon.message(CURR_TEMPLATE % (
+                args[0],
+                args[1],
+                round(float(args[0])*float(rate["Rate"]), 2),
+                args[-1],
+                rate["Date"],
+                rate["Time"]
+            ))
