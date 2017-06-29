@@ -208,7 +208,7 @@ def inline_handle(bot: Bot, update: Update):
 def start_command(_: Bot, update: Update, user, args):
     """/start command"""
     if len(args) != 1:
-        return octeon.message("Hi! I am Octeon, an modular telegram bot by @OctoNezd! To see my features, type /help")
+        return octeon.message("Hi! I am Octeon, a modular telegram bot! To see my features, type /help. \n Have problems? Go to @octeon")
     else:
         return octeon.message(CMDDOCS)
 def help_command(bot: Bot, update: Update, user, args):
