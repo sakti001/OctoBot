@@ -20,6 +20,7 @@ def port(bot, update, user, args):
     if " ".join(args) in PORTLIST:
         ports = []
         for port in PORTLIST[" ".join(args)]:
+            port["description"] = port["description"].replace("â€”", " ")
             ports.append(PORTINFO % port)
         return octeon.message(text="\nAlso may be:".join(ports), parse_mode="HTML")
     else:
