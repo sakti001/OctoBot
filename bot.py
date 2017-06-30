@@ -2,7 +2,9 @@
 Octeon rewrite
 """
 import logging
+import os
 import re
+import sys
 import warnings
 from html import escape
 from pprint import pformat
@@ -275,8 +277,13 @@ def loaded(_: Bot, update: Update):
 
 def error_handle(bot, update, error):
     """Handles bad things"""
-    bot.sendMessage(chat_id=settings.ADMIN,
-                    text='Update "{}" caused error "{}"'.format(update, error))
+    if update is None:
+        # Restart bot
+        LOGGER.error("Very weird shit happend, restarting...")
+        os.execl(sys.executable, sys.executable, *sys.argv)
+    else:
+        bot.sendMessage(chat_id=settings.ADMIN,
+                        text='Update "{}" caused error "{}"'.format(update, error))
 
 LOGGER.info("Checking Analytics status...")
 if settings.TRACKCODE != "":
