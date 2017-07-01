@@ -210,7 +210,7 @@ def inline_handle(bot: Bot, update: Update):
 def start_command(_: Bot, update: Update, user, args):
     """/start command"""
     if len(args) != 1:
-        return octeon.message("Hi! I am Octeon, a modular telegram bot! To see my features, type /help. \News: @octeon")
+        return octeon.message("Hi! I am Octeon, a modular telegram bot! To see my features, type /help. \nNews: @octeon")
     else:
         return octeon.message(CMDDOCS)
 def help_command(bot: Bot, update: Update, user, args):
@@ -235,7 +235,7 @@ def inlinebutton(bot, update):
             bot.deleteMessage(data[0], data[1])
             query.answer("Message deleted")
         else:
-            query.answer("You are not the one who sent this command!")            
+            query.answer("You are not the one who sent this command!")        
 
 def onmessage_handle(bot, update):
     for regex in REGEXHAND:
