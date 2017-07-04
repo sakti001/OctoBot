@@ -22,12 +22,17 @@ def lock_check(bot, update):
                 inline_supported=True,
                 hidden=False)
 def lock(bot, update, user, args):
-    if update.message.chat.type != "PRIVATE" and not update.message.chat_id in locked:
+    if update.message.chat_id in locked:
+        return octeon.message("Chat is already locked")
+    if update.message.chat.type != "PRIVATE":
         for admin in update.message.chat.get_administrators():
-            if admin.user.username == bot.get_me().username:
-                locked.append(update.message.chat_id)
-                return octeon.message("Chat locked")
-        return octeon.message("I am not admin of this chat...")
+            if admin.user.username == update.message.from_user.username:
+                for admin in update.message.chat.get_administrators():
+                    if admin.user.username == bot.get_me().username:
+                        locked.append(update.message.chat_id)
+                        return octeon.message("Chat locked")
+                return octeon.message("I am not admin of this chat...")
+        return octeon.message(text="Hey! You are not admin of this chat!", photo="https://pbs.twimg.com/media/C_I2Xv1WAAAkpiv.jpg")
     else:
         return octeon.message("Why would you lock a private converstaion?")
 
@@ -37,7 +42,9 @@ def lock(bot, update, user, args):
                 hidden=False)
 def unlock(bot, update, user, args):
     if update.message.chat_id in locked:
-        locked.remove(update.message.chat_id)
-        return octeon.message("Chat unlocked")
+        for admin in update.message.chat.get_administrators():
+            if admin.user.username == update.message.from_user.username:
+                locked.remove(update.message.chat_id)
+                return octeon.message("Chat unlocked")
     else:
         return octeon.message("This chat wasnt locked at all")
