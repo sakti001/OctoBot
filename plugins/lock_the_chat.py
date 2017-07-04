@@ -11,6 +11,9 @@ plugin = octeon.Plugin()
 @plugin.message(regex=".*") # You pass regex pattern
 def lock_check(bot, update):
     if update.message.chat_id in locked:
+        for admin in update.message.chat.get_administrators():
+            if admin.user.username == update.message.from_user.username:
+                return
         update.message.delete()
     return
 
