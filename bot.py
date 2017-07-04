@@ -73,7 +73,7 @@ def command_handle(bot: Bot, update: Update):
                 TRACK.event(update.message.from_user.id, command, "command")
                 if reply is None:
                     return
-                if isinstance(reply, None):
+                if reply is None:
                     return
                 elif not isinstance(reply, octeon.message):
                     # Backwards compability
