@@ -34,26 +34,31 @@ def load_plugins(updater: Updater):
             })
         else:
             try:
-                module.PLUGINVERSION
+                module.NOTAPLUGIN
             except AttributeError:
-                # Working with outdated plugins. 
-                module.preload(updater, i)
-                plugins.append({
-                    "state":OK,
-                    "name":name,
-                    "commands":module.COMMANDS
-                })
-                LOGGER.info("Module %s loaded", name)
-                LOGGER.warning("Module %s is outdated!", name)
+                try:
+                    module.PLUGINVERSION
+                except AttributeError:
+                    # Working with outdated plugins. 
+                    module.preload(updater, i)
+                    plugins.append({
+                        "state":OK,
+                        "name":name,
+                        "commands":module.COMMANDS
+                    })
+                    LOGGER.info("Module %s loaded", name)
+                    LOGGER.warning("Module %s is outdated!", name)
+                else:
+                    # Working with new plugins
+                    plugins.append({
+                        "state":OK,
+                        "name":name,
+                        "commands":module.plugin.commands,
+                        "msghandles":module.plugin.handlers
+                    })
+                    LOGGER.info("Module %s loaded", name)
             else:
-                # Working with new plugins
-                plugins.append({
-                    "state":OK,
-                    "name":name,
-                    "commands":module.plugin.commands,
-                    "msghandles":module.plugin.handlers
-                })
-                LOGGER.info("Module %s loaded", name)
+                continue
     return plugins
 
 def gen_commands(pluglist):

@@ -1,7 +1,7 @@
 """
 Octeon stuff
 """
-
+NOTAPLUGIN = True
 class message:
     """
     Base message class
