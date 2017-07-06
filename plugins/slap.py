@@ -20,7 +20,7 @@ SLAP_TEMPLATES = {
 "prods %(user)s with a %(item)s.",
 "picks up a %(item)s and %(hits)s %(user)s with it.",
 "ties %(user)s to a chair and %(throws)s a %(item)s at them.",
-"%(hits)s %(user)s {where} with a %(item)s.",
+"%(hits)s %(user)s %(where)s with a %(item)s.",
 "ties %(user)s to a pole and whips them with a %(item)s."
 ],
 "parts": {
