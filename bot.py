@@ -73,8 +73,6 @@ def command_handle(bot: Bot, update: Update):
                 TRACK.event(update.message.from_user.id, command, "command")
                 if reply is None:
                     return
-                if reply is None:
-                    return
                 elif not isinstance(reply, octeon.message):
                     # Backwards compability
                     LOGGER.warning("Old message reply format! Please update it to new one")
