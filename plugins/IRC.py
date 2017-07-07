@@ -1,6 +1,4 @@
 """IRC Stuff"""
-from random import choice
-
 import octeon
 PLUGINVERSION = 2
 # Always name this variable as `plugin`
