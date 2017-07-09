@@ -242,7 +242,9 @@ def onmessage_handle(bot, update):
         if re.match(regex, update.message.text):
             reply = REGEXHAND[regex](bot, update)
             message = update.message
-            if reply.photo:
+            if reply is None:
+                return
+            elif reply.photo:
                 msg = message.reply_photo(reply.photo,
                                             caption=reply.text,
                                             reply_markup=reply.inline_keyboard)
