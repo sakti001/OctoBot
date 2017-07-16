@@ -167,7 +167,8 @@ def inline_handle(bot: Bot, update: Update):
                                                      reply_markup=reply.inline_keyboard))
     update.inline_query.answer(results=result,
                                switch_pm_text="List commands",
-                               switch_pm_parameter="help")
+                               switch_pm_parameter="help",
+                               cache_time=1)
 
 
 def start_command(_: Bot, update: Update, user, args):
