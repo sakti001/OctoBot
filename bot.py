@@ -122,58 +122,49 @@ def inline_handle(bot: Bot, update: Update):
             TRACK.event(update.inline_query.from_user.id, command, "inline")
             if reply is None:
                 return
-            if isinstance(reply, octeon.message):
-                if isinstance(reply, str):
-                    result.append(InlineQueryResultArticle(
-                        id=uuid4(),
-                        title=command,
-                        description=reply.split("\n")[0],
-                        input_message_content=InputTextMessageContent(reply)
-                    ))
-                elif reply[1] == constants.TEXT:
-                    result.append(InlineQueryResultArticle(
-                        id=uuid4(),
-                        title=command,
-                        description=reply[0].split("\n")[0],
-                        input_message_content=InputTextMessageContent(reply[0])
-                    ))
-                elif reply[1] == constants.HTMLTXT:
-                    result.append(InlineQueryResultArticle(
-                        id=uuid4(),
-                        title=command,
-                        description=re.sub(cleanr, "", reply[0].split("\n")[0]),
-                        input_message_content=InputTextMessageContent(reply[0], parse_mode="HTML")
-                    ))
-                elif reply[1] == constants.MDTEXT:
-                    result.append(InlineQueryResultArticle(
-                        id=uuid4(),
-                        title=command,
-                        description=reply[0].split("\n")[0],
-                        input_message_content=InputTextMessageContent(
-                            reply[0], parse_mode="MARKDOWN")
-                    ))
-                elif reply[1] == constants.PHOTO:
-                    if type(reply[0]) == str:
-                        result.append(InlineQueryResultPhoto(photo_url=reply[0],
-                                                             thumb_url=reply[0],
-                                                             id=uuid4()))
-                    else:
-                        pic = bot.sendPhoto(chat_id=settings.CHANNEL, photo=reply[0])
-                        pic = pic.photo[0].file_id
-                        result.append(InlineQueryResultCachedPhoto(
-                            photo_file_id=pic,
-                            id=uuid4()
-                        ))
-                elif reply[1] == constants.PHOTOWITHINLINEBTN:
-                    result.append(InlineQueryResultPhoto(photo_url=reply[0][0],
-                                                         thumb_url=reply[0][0],
-                                                         id=uuid4(),
-                                                         caption=reply[0][1],
-                                                         reply_markup=reply[0][2]))
+            if not isinstance(reply, octeon.message):
+                reply = octeon.message.from_old_format(reply)
+            if reply.text:
+                result.append(InlineQueryResultArticle(
+                    id=uuid4(),
+                    title=command,
+                    description=reply.text.split("\n")[0],
+                    input_message_content=InputTextMessageContent(reply.text)
+                ))
+            elif reply.parse_mode == "HTML":
+                result.append(InlineQueryResultArticle(
+                    id=uuid4(),
+                    title=command,
+                    description=re.sub(cleanr, "", reply.text.split("\n")[0]),
+                    input_message_content=InputTextMessageContent(reply.text, parse_mode="HTML")
+                ))
+            elif reply.parse_mode == "MARKDOWN":
+                result.append(InlineQueryResultArticle(
+                    id=uuid4(),
+                    title=command,
+                    description=reply.text.split("\n")[0],
+                    input_message_content=InputTextMessageContent(
+                        reply.text, parse_mode="MARKDOWN")
+                ))
+            elif reply.photo:
+                if type(reply.photo) == str:
+                    result.append(InlineQueryResultPhoto(photo_url=reply.photo,
+                                                         thumb_url=reply.photo,
+                                                         id=uuid4()))
                 else:
-                    raise NotImplementedError("Reply type %s not supported" % reply[1])
-            else:
-                return
+                    pic = bot.sendPhoto(chat_id=settings.CHANNEL, photo=reply.photo)
+                    pic = pic.photo[0].file_id
+                    result.append(InlineQueryResultCachedPhoto(
+                        photo_file_id=pic,
+                        caption=reply.text,
+                        id=uuid4()
+                    ))
+            elif reply.photo and reply.inline_keyboard:
+                result.append(InlineQueryResultPhoto(photo_url=reply.photo,
+                                                     thumb_url=reply.photo,
+                                                     id=uuid4(),
+                                                     caption=reply.text,
+                                                     reply_markup=reply.inline_keyboard))
     update.inline_query.answer(results=result,
                                switch_pm_text="List commands",
                                switch_pm_parameter="help")
@@ -191,7 +182,7 @@ def help_command(bot: Bot, update: Update, user, args):
     """/help command"""
     try:
         bot.sendMessage(update.message.from_user.id, CMDDOCS)
-        return None, constants.NOTHING
+        return None
     except TelegramError:
         return octeon.message("PM me, so I can send you /help")
     else:
