@@ -27,8 +27,6 @@ class message:
         self.photo = photo
         self.inline_keyboard = inline_keyboard
         self.parse_mode = parse_mode
-        if not (photo or file) and text in ("", None):
-            raise ValueError("No photo or file specifed and no text specified")
         if photo and file:
             raise TypeError("Send file and photo at same time?!")
         if (photo or file) and parse_mode:
