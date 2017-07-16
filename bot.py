@@ -117,7 +117,6 @@ def inline_handle(bot: Bot, update: Update):
     result = []
     for command in INLINE:
         if query.startswith(command):
-            print(command)
             reply = INLINE[command](bot, update, user, args)
             TRACK.event(update.inline_query.from_user.id, command, "inline")
             if reply is None:
