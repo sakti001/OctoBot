@@ -123,14 +123,7 @@ def inline_handle(bot: Bot, update: Update):
                 return
             if not isinstance(reply, octeon.message):
                 reply = octeon.message.from_old_format(reply)
-            if reply.text:
-                result.append(InlineQueryResultArticle(
-                    id=uuid4(),
-                    title=command,
-                    description=reply.text.split("\n")[0],
-                    input_message_content=InputTextMessageContent(reply.text)
-                ))
-            elif reply.parse_mode == "HTML":
+            if reply.parse_mode == "HTML":
                 result.append(InlineQueryResultArticle(
                     id=uuid4(),
                     title=command,
@@ -158,6 +151,13 @@ def inline_handle(bot: Bot, update: Update):
                         caption=reply.text,
                         id=uuid4()
                     ))
+            elif not reply.text == "":
+                result.append(InlineQueryResultArticle(
+                    id=uuid4(),
+                    title=command,
+                    description=reply.text.split("\n")[0],
+                    input_message_content=InputTextMessageContent(reply.text)
+                ))
             elif reply.photo and reply.inline_keyboard:
                 result.append(InlineQueryResultPhoto(photo_url=reply.photo,
                                                      thumb_url=reply.photo,
