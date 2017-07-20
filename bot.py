@@ -206,8 +206,8 @@ def inlinebutton(bot, update):
 
 def onmessage_handle(bot, update):
     for regex in REGEXHAND:
-        if re.match(regex, update.message.text):
-            reply = REGEXHAND[regex](bot, update)
+        if re.match(regex["regex"], update.message.text):
+            reply = regex["function"](bot, update)
             message = update.message
             if reply is None:
                 return

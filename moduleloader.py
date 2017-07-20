@@ -8,6 +8,8 @@ from telegram.ext import Updater
 from constants import ERROR, OK
 
 LOGGER = getLogger("ModuleLoader")
+
+
 def load_plugins(updater: Updater):
     """
     Loads plugins.
@@ -24,13 +26,13 @@ def load_plugins(updater: Updater):
         try:
             module = import_module(plugin)
             module.level = i
-        except Exception as ohno: # pylint: disable=W0703
+        except Exception as ohno:  # pylint: disable=W0703
             LOGGER.error("Module %s failed to load:", plugin)
             LOGGER.error(ohno)
             plugins.append({
-                "state":ERROR,
-                "name":name,
-                "commands":[]
+                "state": ERROR,
+                "name": name,
+                "commands": []
             })
         else:
             try:
@@ -39,27 +41,28 @@ def load_plugins(updater: Updater):
                 try:
                     module.PLUGINVERSION
                 except AttributeError:
-                    # Working with outdated plugins. 
+                    # Working with outdated plugins.
                     module.preload(updater, i)
                     plugins.append({
-                        "state":OK,
-                        "name":name,
-                        "commands":module.COMMANDS
+                        "state": OK,
+                        "name": name,
+                        "commands": module.COMMANDS
                     })
                     LOGGER.info("Module %s loaded", name)
                     LOGGER.warning("Module %s is outdated!", name)
                 else:
                     # Working with new plugins
                     plugins.append({
-                        "state":OK,
-                        "name":name,
-                        "commands":module.plugin.commands,
-                        "msghandles":module.plugin.handlers
+                        "state": OK,
+                        "name": name,
+                        "commands": module.plugin.commands,
+                        "msghandles": module.plugin.handlers
                     })
                     LOGGER.info("Module %s loaded", name)
             else:
                 continue
     return plugins
+
 
 def gen_commands(pluglist):
     """
@@ -71,6 +74,7 @@ def gen_commands(pluglist):
         for command in plugin["commands"]:
             commands[command["command"]] = command["function"]
     return commands
+
 
 def gen_inline(pluglist):
     """
@@ -84,14 +88,16 @@ def gen_inline(pluglist):
                 commands[command["command"]] = command["function"]
     return commands
 
+
 def gen_messages(pluglist):
     LOGGER.info("Generating message hadnlers")
-    regexes = {}
+    regexes = []
     for plugin in pluglist:
         if "msghandles" in plugin:
             for handle in plugin["msghandles"]:
-                regexes[handle["regex"]] = handle["function"]
+                regexes.append(handle)
     return regexes
+
 
 def generate_docs(pluglist):
     """
