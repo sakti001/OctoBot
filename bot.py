@@ -210,7 +210,7 @@ def onmessage_handle(bot, update):
             reply = regex["function"](bot, update)
             message = update.message
             if reply is None:
-                return
+                continue
             elif reply.photo:
                 msg = message.reply_photo(reply.photo,
                                           caption=reply.text,
