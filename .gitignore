@@ -91,3 +91,4 @@ ENV/
 .ropeproject
 settings.py
 plugins/IGetCurrencies.json
+plugdata/*
