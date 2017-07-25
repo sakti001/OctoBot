@@ -14,8 +14,11 @@ for letter in ascii_letters:
     ascii_udown[letter] = letters[list(ascii_letters).index(letter)]
 for letter in ascii_letters:
     ascii_vwave[letter] = vwave[list(ascii_letters).index(letter)]
+
+
 def preload(*_):
     return
+
 
 def vaporwave(b: Bot, u: Update, _, args):
     msg = ""
@@ -32,7 +35,7 @@ def cowsay(_: Bot, update: Update, user, args):
     proc = Popen(['cowsay'], stdout=PIPE, stdin=PIPE)
     stdout = str(
         proc.communicate(input=bytes(args, 'utf-8'))[0], 'utf-8').split('\n')
-    font = ImageFont.truetype("plugins/CamingoCode-Regular.ttf", 12)
+    font = ImageFont.truetype("plugdata/cowsay.ttf", 12)
     width = []
     height_t = []
     height = 0
@@ -85,35 +88,36 @@ def tm(_: Bot, update: Update, user, args):
         if not reply.from_user.name == Bot.getMe().name:
             return reply.text + "™️️", constants.TEXT
 
+
 COMMANDS = [
     {
-        "command":"/tm",
-        "function":tm,
-        "description":"Adds ™️️ to reply message!",
+        "command": "/tm",
+        "function": tm,
+        "description": "Adds ™️️ to reply message!",
         "inline_support": False
     },
     {
-        "command":"/shout",
-        "function":shout,
-        "description":"Shouts text",
+        "command": "/shout",
+        "function": shout,
+        "description": "Shouts text",
         "inline_support": True
     },
     {
-        "command":"/upsidedown",
-        "function":upsidedown,
-        "description":"Make your message upside-down",
+        "command": "/upsidedown",
+        "function": upsidedown,
+        "description": "Make your message upside-down",
         "inline_support": True
     },
     {
-        "command":"/cowsay",
-        "function":cowsay,
-        "description":"Have you mooed today?",
+        "command": "/cowsay",
+        "function": cowsay,
+        "description": "Have you mooed today?",
         "inline_support": True
     },
     {
-        "command":"/vwave",
-        "function":vaporwave,
-        "description":"Adds aesthetics to your text. We had this feature before it were in mattata!",
+        "command": "/vwave",
+        "function": vaporwave,
+        "description": "Adds aesthetics to your text. We had this feature before it were in mattata!",
         "inline_support": True
     }
 ]
