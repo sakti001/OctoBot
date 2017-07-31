@@ -21,7 +21,7 @@ import constants
 import moduleloader
 import octeon
 import settings
-import teletrack
+from telegram.ext.dispatcher import run_async
 
 global TRACKER
 cleanr = re.compile('<.*?>')
@@ -42,7 +42,7 @@ def tracker(_: Bot, update: Update, __, ___):
         else:
             return "I dont remember sending this message..."
 
-
+@run_async
 def command_handle(bot: Bot, update: Update):
     """
     Handles commands
@@ -101,7 +101,7 @@ def command_handle(bot: Bot, update: Update):
 #
 #
 
-
+@run_async
 def inline_handle(bot: Bot, update: Update):
     query = update.inline_query.query
     args = query.split(" ")[1:]
@@ -160,7 +160,7 @@ def inline_handle(bot: Bot, update: Update):
                                switch_pm_parameter="help",
                                cache_time=1)
 
-
+@run_async
 def inlinebutton(bot, update):
     query = update.callback_query
     if query.data.startswith("del"):
@@ -175,7 +175,7 @@ def inlinebutton(bot, update):
         else:
             query.answer("You are not the one who sent this command!")
 
-
+@run_async
 def onmessage_handle(bot, update):
     pinkyresp = PINKY.handle_message(update)
     for handle in pinkyresp:
@@ -214,14 +214,6 @@ def error_handle(bot, update, error):
         bot.sendMessage(chat_id=settings.ADMIN,
                         text='Update "{}" caused error "{}"'.format(update, error))
 
-
-LOGGER.info("Checking Analytics status...")
-if settings.TRACKCODE != "":
-    LOGGER.info("Analytics is avaiable!")
-    TRACK = teletrack.tele_track(settings.TRACKCODE, "Octeon")
-else:
-    LOGGER.warning("Analytics is NOT avaiable")
-    TRACK = teletrack.dummy_track()
 
 if __name__ == '__main__':
     LOGGER.info("Adding handlers...")
