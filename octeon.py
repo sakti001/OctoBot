@@ -53,7 +53,7 @@ class message:
             message.photo = reply[0]
         elif reply[1] == constants.PHOTOWITHINLINEBTN:
             message.photo = reply[0][0]
-            message.text = reply[0][1],
+            message.text = reply[0][1]
             message.inline_keyboard = reply_markup = reply[0][2]
         if "failed" in reply:
             message.failed = True
