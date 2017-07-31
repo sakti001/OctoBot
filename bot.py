@@ -72,9 +72,11 @@ def command_handle(bot: Bot, update: Update):
                 # Backwards compability
                 reply = octeon.message.from_old_format(reply)
             if reply.photo:
-                msg = message.reply_photo(reply.photo,
-                                          caption=reply.text,
-                                          reply_markup=reply.inline_keyboard)
+                msg = message.reply_photo(reply.photo)
+                if reply.text:
+                    msg = message.reply_text(reply.text,
+                                             parse_mode=reply.parse_mode,
+                                             reply_markup=reply.inline_keyboard)
             elif reply.file:
                 msg = message.reply_document(document=reply.file,
                                              caption=reply.text,
