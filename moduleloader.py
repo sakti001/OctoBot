@@ -31,7 +31,9 @@ class Pinky:
         else:
             return octeon.message("Access Denied.")
 
-    def coreplug_start(self, *_):
+    def coreplug_start(self, bot, update, user, args):
+        if args[0] == "help" and update.message.chat.type == "private":
+            return self.coreplug_help()
         return octeon.message("Hi! I am Octeon, telegram bot with random stuff!\nTo see my commands, type: /help")
 
     def coreplug_help(self, *_):

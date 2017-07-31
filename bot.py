@@ -100,8 +100,18 @@ def command_handle(bot: Bot, update: Update):
                 }
             except UnboundLocalError:
                 pass
-#
-#
+
+
+@run_async
+def new_someone(bot: Bot, update: Update):
+    me = bot.getMe()
+    for user in update.message.new_chat_members:
+        if user == me:
+            keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(text="List commands", url="http://t.me/%s?start=help" % me.username)]])
+            bot.sendMessage(update.message.chat.id,
+            "Hello, I am %s, a telegram bot with various features, to know more, click on button below" % me.first_name,
+            reply_markup=keyboard)
+
 
 @run_async
 def inline_handle(bot: Bot, update: Update):
@@ -111,6 +121,7 @@ def inline_handle(bot: Bot, update: Update):
     result = []
     pinkyresp = PINKY.handle_inline(update)
     if pinkyresp:
+        bot.sendAction(update.message.chat.id, "typing")
         reply = pinkyresp[0](bot, update, user, args)
         if reply is None:
             return
@@ -223,6 +234,7 @@ if __name__ == '__main__':
     DISPATCHER.add_handler(MessageHandler(Filters.command, command_handle))
     DISPATCHER.add_handler(InlineQueryHandler(inline_handle))
     DISPATCHER.add_handler(CallbackQueryHandler(inlinebutton))
+    DISPATCHER.add_handler(MessageHandler(Filters.status_update.new_chat_members, new_someone))
     DISPATCHER.add_error_handler(error_handle)
     if settings.WEBHOOK_ON:
         LOGGER.info("Webhook is ON")
