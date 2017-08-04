@@ -42,7 +42,10 @@ def steam(b: Bot, u: Update, user, args):
                 message += "🔓User account is not limited\n"
             else:
                 message += "🔒User account is limited\n"
-            message += "User is member since %s\n" % user["memberSince"]
+            if user["privacyState"] == "public":
+                message += "User is member since %s\n" % user["memberSince"]
+            else:
+                message += "⚠️User account visibility is limited"
             keyboard = [
                 [InlineKeyboardButton(
                     "➕Add to friends", url="http://octeon.octonezd.pw/steam.html?steamid=" + user["steamID64"])]
@@ -60,4 +63,3 @@ COMMANDS = [
         "inline_support":True
     }
 ]
-
