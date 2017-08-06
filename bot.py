@@ -54,6 +54,7 @@ def command_handle(bot: Bot, update: Update):
         update.message.reply_to_message.text = update.message.reply_to_message.caption
     commanddata = update.message.text.split()[0].split('@')
     if (len(commanddata) >= 2 and commanddata[1] == bot.username) or (len(commanddata) == 1):
+        bot.send_chat_action(update.message.chat.id, "typing")
         pinkyresp = PINKY.handle_command(update)
         if pinkyresp:
             if len(TRACKER) > 100:
@@ -121,7 +122,6 @@ def inline_handle(bot: Bot, update: Update):
     result = []
     pinkyresp = PINKY.handle_inline(update)
     if pinkyresp:
-        bot.sendAction(update.message.chat.id, "typing")
         reply = pinkyresp[0](bot, update, user, args)
         if reply is None:
             return
