@@ -22,7 +22,7 @@ import moduleloader
 import octeon
 import settings
 from telegram.ext.dispatcher import run_async
-
+from time import sleep
 global TRACKER
 cleanr = re.compile('<.*?>')
 logging.basicConfig(level=logging.INFO)
@@ -238,4 +238,10 @@ if __name__ == '__main__':
     else:
         LOGGER.info("Webhook is OFF")
         UPDATER.start_polling(clean=True)
-        UPDATER.idle()
+        while 1:
+            if not UPDATER.running:
+                LOGGER.warning("Bot crashed? Will restart in 5 seconds")
+                sleep(5)
+                UPDATER.start_polling(clean=True)
+
+        # UPDATER.idle()
