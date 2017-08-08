@@ -2,7 +2,7 @@
 Octeon stuff
 """
 import constants
-
+import html
 NOTAPLUGIN = True
 
 
@@ -71,7 +71,7 @@ class Plugin:
         def decorator(func):
             self.commands.append({
                 "command": command,
-                "description": description,
+                "description": html.escape(description),
                 "function": func,
                 "inline_support": inline_supported,
                 "hidden": hidden
