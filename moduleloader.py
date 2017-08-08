@@ -15,14 +15,7 @@ import settings
 from constants import ERROR, OK
 
 LOGGER = getLogger("Octeon-Pinky")
-
-
-class Pinky:
-    def __init__(self):
-        self.plugins = []
-        LOGGER.info("Starting Octeon-Pinky. Loading plugins.")
-        self.load_all_plugins()
-
+class CorePlugin:
     def coreplug_reload(self, bot, update, user, *__):
         if user.id == settings.ADMIN:
             LOGGER.info("Reload requested.")
@@ -37,18 +30,6 @@ class Pinky:
             if args[0] == "help" and update.message.chat.type == "private":
                 return self.gen_help()
         return octeon.message("Hi! I am Octeon, telegram bot with random stuff!\nTo see my commands, type: /help")
-
-    def gen_help(self):
-        docs = ""
-        for plugin in self.plugins:
-            for command in plugin["commands"]:
-                if "description" in command:
-                    if "hidden" in command:
-                        if command["hidden"]:
-                            continue
-                    docs += "%s - %s\n" % (command["command"],
-                                           command["description"])
-        return docs
 
     def coreplug_help(self, bot, update, *_):
         if update.message.chat.type == "private":
@@ -80,6 +61,24 @@ class Pinky:
             return self.coreplug_list()
         else:
             return octeon.message("Access Denied.")
+
+class Pinky(CorePlugin):
+    def __init__(self):
+        self.plugins = []
+        LOGGER.info("Starting Octeon-Pinky. Loading plugins.")
+        self.load_all_plugins()
+
+    def gen_help(self):
+        docs = ""
+        for plugin in self.plugins:
+            for command in plugin["commands"]:
+                if "description" in command:
+                    if "hidden" in command:
+                        if command["hidden"]:
+                            continue
+                    docs += "%s - %s\n" % (command["command"],
+                                           command["description"])
+        return docs
 
     def load_all_plugins(self):
         self.plugins.clear()
