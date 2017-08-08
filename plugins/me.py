@@ -9,5 +9,5 @@ plugin = octeon.Plugin()
                 inline_supported=True,
                 hidden=False)
 def me(bot, update, user, args):
-    args = " ".join(update.message.text.split(" ")[1:])    
+    args = " ".join(update.message.text.split(" ")[1:])
     return octeon.message(text="* %s %s" % (user.username, args))
