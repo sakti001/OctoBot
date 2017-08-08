@@ -67,7 +67,7 @@ class Plugin:
         self.commands = []
         self.handlers = []
 
-    def command(self, command, description="", inline_supported=True, hidden=False):
+    def command(self, command, description="Not available", inline_supported=True, hidden=False):
         def decorator(func):
             self.commands.append({
                 "command": command,

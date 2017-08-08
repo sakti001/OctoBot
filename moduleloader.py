@@ -14,6 +14,13 @@ import octeon
 import settings
 from constants import ERROR, OK
 
+COMMAND_INFO = """
+%(command)s
+Description: <i>%(description)s</i>
+Additional info and examples:
+<i>%(docs)s</i>
+"""
+
 LOGGER = getLogger("Octeon-Pinky")
 class CorePlugin:
     def coreplug_reload(self, bot, update, user, *__):
@@ -29,14 +36,25 @@ class CorePlugin:
         if len(args) > 0:
             if args[0] == "help" and update.message.chat.type == "private":
                 return self.gen_help()
-        return octeon.message("Hi! I am Octeon, telegram bot with random stuff!\nTo see my commands, type: /help")
+        return octeon.message("Hi! I am Octeon, %s bot with random stuff!\nTo see my commands, type: /help" % self.platform)
 
-    def coreplug_help(self, bot, update, *_):
-        if update.message.chat.type == "private":
-            return self.gen_help()
+    def coreplug_help(self, bot, update, user, args):
+        if args:
+            for plugin in self.plugins:
+                for command in plugin["commands"]:
+                    if args[0].lower() == command["command"].lower():
+                        info = {"command":args[0], "description":"Not available", "docs":"Not available"}
+                        info["description"] = command["description"]
+                        if command["function"].__doc__:
+                            info["docs"] == command["function"].__doc__
+                        return octeon.message(COMMAND_INFO % info, parse_mode="HTML")
+            return "I dont know this command"
         else:
-            keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(text="List commands in PM", url="http://t.me/%s?start=help" % bot.getMe().username)]])
-            return octeon.message("To prevent flood, use this command in PM", inline_keyboard=keyboard)
+            if update.message.chat.type == "private":
+                return self.gen_help()
+            else:
+                keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(text="List commands in PM", url="http://t.me/%s?start=help" % bot.getMe().username)]])
+                return octeon.message("To prevent flood, use this command in PM", inline_keyboard=keyboard)
 
     def coreplug_list(self, *_):
         message = []
@@ -65,6 +83,7 @@ class CorePlugin:
 class Pinky(CorePlugin):
     def __init__(self):
         self.plugins = []
+        self.platform = "telegram"
         LOGGER.info("Starting Octeon-Pinky. Loading plugins.")
         self.load_all_plugins()
 
