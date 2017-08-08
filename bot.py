@@ -30,8 +30,8 @@ TRACKER = {}
 BANNEDUSERS = []
 LOGGER = logging.getLogger("Octeon-Brain")
 UPDATER = Updater(settings.TOKEN)
-PINKY = moduleloader.Pinky()
 DISPATCHER = UPDATER.dispatcher
+PINKY = moduleloader.Pinky(DISPATCHER)
 
 
 def tracker(_: Bot, update: Update, __, ___):
@@ -47,9 +47,6 @@ def command_handle(bot: Bot, update: Update):
     """
     Handles commands
     """
-    global TRACKER
-    if update.message.from_user.id in BANNEDUSERS:
-        return
     if update.message.reply_to_message and update.message.reply_to_message.photo:
         update.message.reply_to_message.text = update.message.reply_to_message.caption
     commanddata = update.message.text.split()[0].split('@')
@@ -57,10 +54,7 @@ def command_handle(bot: Bot, update: Update):
         bot.send_chat_action(update.message.chat.id, "typing")
         pinkyresp = PINKY.handle_command(update)
         if pinkyresp:
-            if len(TRACKER) > 100:
-                TRACKER = {}
             user = update.message.from_user
-            # LOGGER.info("User %s requested %s.", user.username, update.message.text)
             args = update.message.text.split(" ")[1:]
             if update.message.reply_to_message is None:
                 message = update.message
@@ -93,15 +87,6 @@ def command_handle(bot: Bot, update: Update):
                 kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton("Delete this message",
                                                                        callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
                 msg.edit_reply_markup(reply_markup=kbrmrkup)
-            try:
-                TRACKER[msg.message_id] = {
-                    "Requested by": update.message.from_user.name,
-                    "Username": update.message.from_user.username,
-                    "Command": update.message.text
-                }
-            except UnboundLocalError:
-                pass
-
 
 @run_async
 def new_someone(bot: Bot, update: Update):

@@ -9,7 +9,7 @@ import re
 import textwrap
 import html
 
-from telegram.ext import Updater
+from telegram.ext import Updater, CommandHandler
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 import octeon
@@ -90,9 +90,11 @@ class CorePlugin:
             return octeon.message("Access Denied.")
 
 class Pinky(CorePlugin):
-    def __init__(self):
+    def __init__(self, dispatcher):
         self.plugins = []
+        self.disabled = []
         self.platform = "telegram"
+        self.dispatcher = dispatcher
         LOGGER.info("Starting Octeon-Pinky. Loading plugins.")
         self.load_all_plugins()
 
@@ -109,8 +111,53 @@ class Pinky(CorePlugin):
         docs += "\nYou can find more info about command by typing after /help, like this: <pre>/help /cash</pre>"
         return docs
 
+    def create_command_handler(self, command, function):
+        def handler(bot, update, args):
+            if update.message.chat.id in self.disabled:
+                return
+            else:
+                state_only_command = update.message.text == command or update.message.text.startswith(
+                    command + " ")
+                state_word_swap = len(update.message.text.split(
+                    "/")) > 2 and update.message.text.startswith(command)
+                state_mention_command = update.message.text.startswith(command + "@")
+                if state_only_command or state_word_swap or state_mention_command:
+                    reply = function(bot, update, update.message.from_user, args)
+                    message = update.message
+                    if reply is None:
+                        return
+                    elif not isinstance(reply, octeon.message):
+                        # Backwards compability
+                        reply = octeon.message.from_old_format(reply)
+                    if reply.photo:
+                        msg = message.reply_photo(reply.photo)
+                        if reply.text:
+                            msg = message.reply_text(reply.text,
+                                                     parse_mode=reply.parse_mode,
+                                                     reply_markup=reply.inline_keyboard)
+                    elif reply.file:
+                        msg = message.reply_document(document=reply.file,
+                                                     caption=reply.text,
+                                                     reply_markup=reply.inline_keyboard)
+                    else:
+                        msg = message.reply_text(reply.text,
+                                                 parse_mode=reply.parse_mode,
+                                                 reply_markup=reply.inline_keyboard)
+                    if reply.failed:
+                        msdict = msg.to_dict()
+                        msdict["chat_id"] = msg.chat_id
+                        msdict["user_id"] = update.message.from_user.id
+                        kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton("Delete this message",
+                                                                               callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
+                        msg.edit_reply_markup(reply_markup=kbrmrkup)
+        return handler
+
     def load_all_plugins(self):
         self.plugins.clear()
+        if 0 in self.dispatcher.handlers:
+            for handle in self.dispatcher.handlers[0]:
+                if isinstance(handle, CommandHandler):
+                    self.dispatcher.remove_handler(handle)
         for filename in glob("plugins/*.py"):
             self.load_plugin(filename)
         self.plugins.append({
@@ -124,6 +171,12 @@ class Pinky(CorePlugin):
             "messagehandles": [],
             "disabledin": []
         })
+        LOGGER.info("Adding handlers")
+        for plugin in self.plugins:
+            for command in plugin["commands"]:
+                if not command["command"].endswith("/"):
+                    callback = self.create_command_handler(command["command"], command["function"])
+                    self.dispatcher.add_handler(CommandHandler(command=command["command"][1:], callback=callback, pass_args=True))
 
     def load_plugin(self, plugpath):
         plugname = os.path.basename(plugpath).split(".py")[0]
@@ -170,14 +223,15 @@ class Pinky(CorePlugin):
             else:
                 for command_info in plugin["commands"]:
                     command = command_info["command"]
-                    function = command_info["function"]
-                    state_only_command = update.message.text == command or update.message.text.startswith(
-                        command + " ")
-                    state_word_swap = len(update.message.text.split(
-                        "/")) > 2 and update.message.text.startswith(command)
-                    state_mention_command = update.message.text.startswith(command + "@")
-                    if state_only_command or state_word_swap or state_mention_command:
-                        return function
+                    if command.endswith("/"):
+                        function = command_info["function"]
+                        state_only_command = update.message.text == command or update.message.text.startswith(
+                            command + " ")
+                        state_word_swap = len(update.message.text.split(
+                            "/")) > 2 and update.message.text.startswith(command)
+                        state_mention_command = update.message.text.startswith(command + "@")
+                        if state_only_command or state_word_swap or state_mention_command:
+                            return function
 
     def handle_inline(self, update):
         for plugin in self.plugins:
