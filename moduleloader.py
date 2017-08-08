@@ -53,7 +53,7 @@ class CorePlugin:
             return "I dont know this command"
         else:
             if update.message.chat.type == "private":
-                return self.gen_help()
+                return octeon.message(self.gen_help(), parse_mode="HTML")
             else:
                 keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(text="List commands in PM", url="http://t.me/%s?start=help" % bot.getMe().username)]])
                 return octeon.message("To prevent flood, use this command in PM", inline_keyboard=keyboard)
@@ -97,9 +97,9 @@ class Pinky(CorePlugin):
                     if "hidden" in command:
                         if command["hidden"]:
                             continue
-                    docs += "%s - %s\n" % (command["command"],
+                    docs += "%s - <i>%s</i>\n" % (command["command"],
                                            command["description"])
-        docs += "\nYou can find more info about command by typing after /help, like this: /help /cash"
+        docs += "\nYou can find more info about command by typing after /help, like this: <pre>/help /cash</pre>"
         return docs
 
     def load_all_plugins(self):
