@@ -8,6 +8,7 @@ from logging import getLogger
 import re
 
 from telegram.ext import Updater
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 import octeon
 import settings
@@ -34,10 +35,10 @@ class Pinky:
     def coreplug_start(self, bot, update, user, args):
         if len(args) > 0:
             if args[0] == "help" and update.message.chat.type == "private":
-                return self.coreplug_help()
+                return self.gen_help()
         return octeon.message("Hi! I am Octeon, telegram bot with random stuff!\nTo see my commands, type: /help")
 
-    def coreplug_help(self, *_):
+    def gen_help(self):
         docs = ""
         for plugin in self.plugins:
             for command in plugin["commands"]:
@@ -47,7 +48,14 @@ class Pinky:
                             continue
                     docs += "%s - %s\n" % (command["command"],
                                            command["description"])
-        return octeon.message(docs)
+        return docs
+
+    def coreplug_help(self, bot, update, *_):
+        if update.message.chat.type == "private":
+            return self.gen_help()
+        else:
+            keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(text="List commands in PM", url="http://t.me/%s?start=help" % bot.getMe().username)]])
+            return octeon.message("To prevent flood, use this command in PM", inline_keyboard=keyboard)
 
     def coreplug_list(self, *_):
         message = []
