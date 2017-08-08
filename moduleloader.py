@@ -6,6 +6,8 @@ import os.path
 from glob import glob
 from logging import getLogger
 import re
+import textwrap
+import html
 
 from telegram.ext import Updater
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
@@ -46,7 +48,7 @@ class CorePlugin:
                         info = {"command":args[0], "description":"Not available", "docs":"Not available"}
                         info["description"] = command["description"]
                         if command["function"].__doc__:
-                            info["docs"] == command["function"].__doc__
+                            info["docs"] = html.escape(textwrap.dedent(command["function"].__doc__))
                         return octeon.message(COMMAND_INFO % info, parse_mode="HTML")
             return "I dont know this command"
         else:
@@ -97,6 +99,7 @@ class Pinky(CorePlugin):
                             continue
                     docs += "%s - %s\n" % (command["command"],
                                            command["description"])
+        docs += "\nYou can find more info about command by typing after /help, like this: /help /cash"
         return docs
 
     def load_all_plugins(self):
