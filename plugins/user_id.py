@@ -6,19 +6,16 @@ import logging
 from telegram import Bot, Update
 from telegram.ext import MessageHandler, Updater, Filters
 
-import constants # pylint: disable=E0401
-LOGGER = logging.getLogger("ID Info")
-
-def preload(*_):
-    """
-    This loads whenever plugin starts
-    Even if you dont need it, you SHOULD put at least
-    return None, otherwise your plugin wont load
-    """
-    return
-
+import octeon
+PLUGINVERSION = 2
+# Always name this variable as `plugin`
+# If you dont, module loader will fail to load the plugin!
+plugin = octeon.Plugin()
+@plugin.command(command="/id",
+                description="Sends chat/user id",
+                inline_supported=True,
+                hidden=False)
 def user_identify(bot: Bot, update: Update, user, args): # pylint: disable=W0613
-    """/id"""
     message = "Your ID:%s\n" % update.message.from_user.id
     message += "Chat type %s, ID:%s\n" % (
         update.message.chat.type,
@@ -31,12 +28,3 @@ def user_identify(bot: Bot, update: Update, user, args): # pylint: disable=W0613
             reply.from_user.id
         )
     return message
-
-COMMANDS = [
-    {
-        "command":"/id",
-        "function":user_identify,
-        "description":"Sends ID of user, chat id, et cetera",
-        "inline_support":False
-    }
-]
