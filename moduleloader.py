@@ -37,8 +37,15 @@ class CorePlugin:
     def coreplug_start(self, bot, update, user, args):
         if len(args) > 0:
             if args[0] == "help" and update.message.chat.type == "private":
-                return self.gen_help()
-        return octeon.message("Hi! I am Octeon, %s bot with random stuff!\nTo see my commands, type: /help" % self.platform)
+                return octeon.message(self.gen_help(), parse_mode="HTML")
+        kbd = InlineKeyboardMarkup(
+        [
+        [InlineKeyboardButton(text="List commands in PM", url="http://t.me/%s?start=help" % bot.getMe().username)],
+        [InlineKeyboardButton(text="News about Octeon", url=settings.NEWS_LINK)],
+        [InlineKeyboardButton(text="Chat about Octeon", url=settings.CHAT_LINK)],
+        ]
+        )
+        return octeon.message("Hi! I am Octeon, %s bot with random stuff!\nTo see my commands, type: /help" % self.platform, inline_keyboard=kbd)
 
     def coreplug_help(self, bot, update, user, args):
         if args:

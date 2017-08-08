@@ -32,3 +32,7 @@ WEBHOOK_URL = "https://example.com:8443/TOKEN"
 # You can get your token from
 # https://tech.yandex.com/translate/
 YANDEX_TRANSLATION_TOKEN = ""
+# Dev chat link
+CHAT_LINK = ""
+# News channel link
+NEWS_LINK = ""

@@ -108,7 +108,13 @@ def new_someone(bot: Bot, update: Update):
     me = bot.getMe()
     for user in update.message.new_chat_members:
         if user == me:
-            keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(text="List commands", url="http://t.me/%s?start=help" % me.username)]])
+            keyboard = InlineKeyboardMarkup(
+            [
+            [InlineKeyboardButton(text="List commands in PM", url="http://t.me/%s?start=help" % bot.getMe().username)],
+            [InlineKeyboardButton(text="News about Octeon", url=settings.NEWS_LINK)],
+            [InlineKeyboardButton(text="Chat about Octeon", url=settings.CHAT_LINK)],
+            ]
+            )
             bot.sendMessage(update.message.chat.id,
             "Hello, I am %s, a telegram bot with various features, to know more, click on button below" % me.first_name,
             reply_markup=keyboard)
