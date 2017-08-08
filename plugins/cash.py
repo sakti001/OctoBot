@@ -17,6 +17,19 @@ Data from Yahoo Finance
                 inline_supported=True,
                 hidden=False)
 def currency(bot, update, user, args):
+    """
+    Powered by Yahoo Finance
+    Example usage:
+    
+    User:
+    /cash 100 RUB USD
+
+    Octeon:
+    100 RUB = 1.66 USD
+
+    8/7/2017 10:30pm
+    Data from Yahoo Finance
+    """
     if len(args) < 3:
         return octeon.message(text="Not enough arguments! Example:<code>/cash 100 RUB USD</code>",
                               parse_mode="HTML",
