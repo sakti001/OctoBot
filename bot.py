@@ -51,9 +51,9 @@ def command_handle(bot: Bot, update: Update):
         update.message.reply_to_message.text = update.message.reply_to_message.caption
     commanddata = update.message.text.split()[0].split('@')
     if (len(commanddata) >= 2 and commanddata[1] == bot.username) or (len(commanddata) == 1):
-        bot.send_chat_action(update.message.chat.id, "typing")
         pinkyresp = PINKY.handle_command(update)
         if pinkyresp:
+            bot.send_chat_action(update.message.chat.id, "typing")
             user = update.message.from_user
             args = update.message.text.split(" ")[1:]
             if update.message.reply_to_message is None:
@@ -211,9 +211,10 @@ def onmessage_handle(bot, update):
 def error_handle(bot, update, error):
     """Handles bad things"""
     if update is None:
-        # Restart bot
-        LOGGER.error("Very weird shit happend, restarting...")
-        os.execl(sys.executable, sys.executable, *sys.argv)
+        # Restart updater
+        LOGGER.error("Very weird shit happend, restarting updater...")
+        UPDATER.stop()
+        UPDATER.start_polling()
     else:
         bot.sendMessage(chat_id=settings.ADMIN,
                         text='Update "{}" caused error "{}"'.format(update, error))
@@ -238,10 +239,4 @@ if __name__ == '__main__':
     else:
         LOGGER.info("Webhook is OFF")
         UPDATER.start_polling(clean=True)
-        while 1:
-            if not UPDATER.running:
-                LOGGER.warning("Bot crashed? Will restart in 5 seconds")
-                sleep(5)
-                UPDATER.start_polling(clean=True)
-
         # UPDATER.idle()
