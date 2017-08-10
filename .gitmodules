@@ -1,6 +1,6 @@
 [submodule "plugins"]
 	path = plugins
-	url = git@github.com:OctoNezd/Octeon-Plugins.git
+	url = https://github.com/OctoNezd/Octeon-Plugins.git
 [submodule "octeon"]
 	path = octeon
-	url = git@github.com:OctoNezd/Octeon-Core.git
+	url = https://github.com/OctoNezd/Octeon-Core.git
