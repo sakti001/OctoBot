@@ -1,6 +1,8 @@
 [submodule "plugins"]
 	path = plugins
 	url = https://github.com/OctoNezd/Octeon-Plugins.git
+	branch = master
 [submodule "octeon"]
 	path = octeon
 	url = https://github.com/OctoNezd/Octeon-Core.git
+	branch = master
