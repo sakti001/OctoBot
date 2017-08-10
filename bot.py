@@ -34,8 +34,9 @@ DISPATCHER = UPDATER.dispatcher
 class Octeon_PTB(octeon.OcteonCore):
     def __init__(self, dispatcher):
         self.dispatcher = dispatcher
-        self.platform = "Telegram"
         octeon.OcteonCore.__init__(self)
+        self.platform = "Telegram"
+
 
     def gen_help(self):
         docs = ""
