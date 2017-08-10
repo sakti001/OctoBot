@@ -36,7 +36,7 @@ class Octeon_PTB(core.OcteonCore):
     def __init__(self, dispatcher):
         self.dispatcher = dispatcher
         self.platform = "Telegram"
-        moduleloader.OcteonCore.__init__(self)
+        core.OcteonCore.__init__(self)
 
     def gen_help(self):
         docs = ""
