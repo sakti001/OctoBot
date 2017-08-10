@@ -17,8 +17,7 @@ from telegram import (Bot, InlineKeyboardButton, InlineKeyboardMarkup,
 from telegram.ext import (CallbackQueryHandler, CommandHandler, Filters,
                           InlineQueryHandler, MessageHandler, Updater)
 
-import constants
-import core
+# import constants
 import octeon
 import settings
 from telegram.ext.dispatcher import run_async
@@ -32,11 +31,11 @@ LOGGER = logging.getLogger("Octeon-Brain")
 UPDATER = Updater(settings.TOKEN)
 DISPATCHER = UPDATER.dispatcher
 
-class Octeon_PTB(core.OcteonCore):
+class Octeon_PTB(octeon.OcteonCore):
     def __init__(self, dispatcher):
         self.dispatcher = dispatcher
         self.platform = "Telegram"
-        core.OcteonCore.__init__(self)
+        octeon.OcteonCore.__init__(self)
 
     def gen_help(self):
         docs = ""
