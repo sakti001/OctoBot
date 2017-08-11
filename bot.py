@@ -23,6 +23,7 @@ import settings
 from telegram.ext.dispatcher import run_async
 from time import sleep
 global TRACKER
+MAIN_PID = os.getpid()
 cleanr = re.compile('<.*?>')
 logging.basicConfig(level=logging.INFO)
 TRACKER = {}
@@ -304,10 +305,9 @@ def onmessage_handle(bot, update):
 def error_handle(bot, update, error):
     """Handles bad things"""
     if update is None:
-        # Restart updater
-        LOGGER.error("Very weird shit happend, restarting updater...")
-        UPDATER.stop()
-        UPDATER.start_polling()
+        # Kill main process
+        LOGGER.error("Very weird shit happend, killing myself...")
+        os.system('kill %d' % MAIN_PID)
     else:
         bot.sendMessage(chat_id=settings.ADMIN,
                         text='Update "{}" caused error "{}"'.format(update, error))
