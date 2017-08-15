@@ -6,6 +6,8 @@ import os
 import re
 import sys
 import warnings
+import html
+import textwrap
 import json
 from html import escape
 from pprint import pformat
@@ -32,7 +34,12 @@ BANNEDUSERS = []
 LOGGER = logging.getLogger("Octeon-Brain")
 UPDATER = Updater(settings.TOKEN)
 DISPATCHER = UPDATER.dispatcher
-
+COMMAND_INFO = """
+%(command)s
+Description: <i>%(description)s</i>
+Additional info and examples:
+<i>%(docs)s</i>
+"""
 class Octeon_PTB(octeon.OcteonCore):
     def __init__(self, updater):
         if os.path.exists(os.path.normpath("plugdata/banned.json")):
@@ -41,7 +48,7 @@ class Octeon_PTB(octeon.OcteonCore):
         else:
             with open(os.path.normpath("plugdata/banned.json"), 'w') as f:
                 f.write("{}")
-        self.banned_chat_message = "Hi. I am afraid my admin/me blocked this chat, so I will leave it.\nReason: %s.\nPlease contact bot admin for unbanning this chat"
+        self.banned_chat_message = "Hi. I am sorry, but my admin/me blocked this chat, so I will leave it.\nReason: %s.\nPlease contact bot admin for unbanning this chat"
         self.updater = updater
         self.dispatcher = updater.dispatcher
         octeon.OcteonCore.__init__(self)
