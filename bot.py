@@ -6,6 +6,7 @@ import os
 import re
 import sys
 import warnings
+import json
 from html import escape
 from pprint import pformat
 from uuid import uuid4
@@ -33,8 +34,16 @@ UPDATER = Updater(settings.TOKEN)
 DISPATCHER = UPDATER.dispatcher
 
 class Octeon_PTB(octeon.OcteonCore):
-    def __init__(self, dispatcher):
-        self.dispatcher = dispatcher
+    def __init__(self, updater):
+        if os.path.exists(os.path.normpath("plugdata/banned.json")):
+            with open(os.path.normpath("plugdata/banned.json")) as f:
+                self.banned = json.load(f)
+        else:
+            with open(os.path.normpath("plugdata/banned.json"), 'w') as f:
+                f.write("{}")
+        self.banned_chat_message = "Hi. I am afraid my admin/me blocked this chat, so I will leave it.\nReason: %s.\nPlease contact bot admin for unbanning this chat"
+        self.updater = updater
+        self.dispatcher = updater.dispatcher
         octeon.OcteonCore.__init__(self)
         self.platform = "Telegram"
 
@@ -63,6 +72,10 @@ class Octeon_PTB(octeon.OcteonCore):
                     "/")) > 2 and update.message.text.startswith(command)
                 state_mention_command = update.message.text.startswith(command + "@")
                 if state_only_command or state_word_swap or state_mention_command:
+                    logging.getLogger("Chat-%s" % update.message.chat.id).info("User %s [%s] requested %s",
+                                                                               update.message.from_user.username,
+                                                                               update.message.from_user.id,
+                                                                               update.message.text)
                     reply = function(bot, update, update.message.from_user, args)
                     message = update.message
                     if reply is None:
@@ -125,7 +138,18 @@ class Octeon_PTB(octeon.OcteonCore):
                 keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(text="List commands in PM", url="http://t.me/%s?start=help" % bot.getMe().username)]])
                 return octeon.message("To prevent flood, use this command in PM", inline_keyboard=keyboard)
 
-PINKY = Octeon_PTB(DISPATCHER)
+    def coreplug_check_banned(self, bot, update):
+        if str(update.message.chat.id) in self.banned:
+            self.updater.bot.sendMessage(update.message.chat.id, self.banned_chat_message % self.banned[str(update.message.chat.id)])
+            self.updater.bot.leaveChat(update.message.chat.id)
+            return False
+        else:
+            return True
+
+
+
+
+PINKY = Octeon_PTB(UPDATER)
 
 
 def tracker(_: Bot, update: Update, __, ___):
@@ -320,6 +344,7 @@ if __name__ == '__main__':
     DISPATCHER.add_handler(InlineQueryHandler(inline_handle))
     DISPATCHER.add_handler(CallbackQueryHandler(inlinebutton))
     DISPATCHER.add_handler(MessageHandler(Filters.status_update.new_chat_members, new_someone))
+    DISPATCHER.add_handler(MessageHandler(Filters.all, PINKY.coreplug_check_banned), group=1)
     DISPATCHER.add_error_handler(error_handle)
     if settings.WEBHOOK_ON:
         LOGGER.info("Webhook is ON")
