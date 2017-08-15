@@ -138,13 +138,18 @@ class Octeon_PTB(octeon.OcteonCore):
                 keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(text="List commands in PM", url="http://t.me/%s?start=help" % bot.getMe().username)]])
                 return octeon.message("To prevent flood, use this command in PM", inline_keyboard=keyboard)
 
-    def coreplug_check_banned(self, bot, update):
-        if str(update.message.chat.id) in self.banned:
-            self.updater.bot.sendMessage(update.message.chat.id, self.banned_chat_message % self.banned[str(update.message.chat.id)])
-            self.updater.bot.leaveChat(update.message.chat.id)
-            return False
+    def check_banned(self, chat_id):
+        if str(chat_id) in self.banned:
+            return self.banned[str(chat_id)]
         else:
-            return True
+            return False
+
+
+    def coreplug_check_banned(self, bot, update):
+        ban = self.check_banned(update.message.chat_id)
+        if ban:
+            self.updater.bot.sendMessage(update.message.chat.id, self.banned_chat_message % ban)
+            self.updater.bot.leaveChat(update.message.chat.id)
 
 
 
@@ -165,62 +170,64 @@ def command_handle(bot: Bot, update: Update):
     """
     Handles commands
     """
-    if update.message.reply_to_message and update.message.reply_to_message.photo:
-        update.message.reply_to_message.text = update.message.reply_to_message.caption
-    commanddata = update.message.text.split()[0].split('@')
-    if (len(commanddata) >= 2 and commanddata[1] == bot.username) or (len(commanddata) == 1):
-        pinkyresp = PINKY.handle_command(update)
-        if pinkyresp:
-            bot.send_chat_action(update.message.chat.id, "typing")
-            user = update.message.from_user
-            args = update.message.text.split(" ")[1:]
-            if update.message.reply_to_message is None:
-                message = update.message
-            else:
-                message = update.message.reply_to_message
-            reply = pinkyresp(bot, update, user, args)
-            if reply is None:
-                return
-            elif not isinstance(reply, octeon.message):
-                # Backwards compability
-                reply = octeon.message.from_old_format(reply)
-            if reply.photo:
-                msg = message.reply_photo(reply.photo)
-                if reply.text:
+    if not PINKY.check_banned(update.message.chat_id):
+        if update.message.reply_to_message and update.message.reply_to_message.photo:
+            update.message.reply_to_message.text = update.message.reply_to_message.caption
+        commanddata = update.message.text.split()[0].split('@')
+        if (len(commanddata) >= 2 and commanddata[1] == bot.username) or (len(commanddata) == 1):
+            pinkyresp = PINKY.handle_command(update)
+            if pinkyresp:
+                bot.send_chat_action(update.message.chat.id, "typing")
+                user = update.message.from_user
+                args = update.message.text.split(" ")[1:]
+                if update.message.reply_to_message is None:
+                    message = update.message
+                else:
+                    message = update.message.reply_to_message
+                reply = pinkyresp(bot, update, user, args)
+                if reply is None:
+                    return
+                elif not isinstance(reply, octeon.message):
+                    # Backwards compability
+                    reply = octeon.message.from_old_format(reply)
+                if reply.photo:
+                    msg = message.reply_photo(reply.photo)
+                    if reply.text:
+                        msg = message.reply_text(reply.text,
+                                                 parse_mode=reply.parse_mode,
+                                                 reply_markup=reply.inline_keyboard)
+                elif reply.file:
+                    msg = message.reply_document(document=reply.file,
+                                                 caption=reply.text,
+                                                 reply_markup=reply.inline_keyboard)
+                else:
                     msg = message.reply_text(reply.text,
                                              parse_mode=reply.parse_mode,
                                              reply_markup=reply.inline_keyboard)
-            elif reply.file:
-                msg = message.reply_document(document=reply.file,
-                                             caption=reply.text,
-                                             reply_markup=reply.inline_keyboard)
-            else:
-                msg = message.reply_text(reply.text,
-                                         parse_mode=reply.parse_mode,
-                                         reply_markup=reply.inline_keyboard)
-            if reply.failed:
-                msdict = msg.to_dict()
-                msdict["chat_id"] = msg.chat_id
-                msdict["user_id"] = update.message.from_user.id
-                kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton("Delete this message",
-                                                                       callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
-                msg.edit_reply_markup(reply_markup=kbrmrkup)
+                if reply.failed:
+                    msdict = msg.to_dict()
+                    msdict["chat_id"] = msg.chat_id
+                    msdict["user_id"] = update.message.from_user.id
+                    kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton("Delete this message",
+                                                                           callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
+                    msg.edit_reply_markup(reply_markup=kbrmrkup)
 
 @run_async
 def new_someone(bot: Bot, update: Update):
-    me = bot.getMe()
-    for user in update.message.new_chat_members:
-        if user == me:
-            keyboard = InlineKeyboardMarkup(
-            [
-            [InlineKeyboardButton(text="List commands in PM", url="http://t.me/%s?start=help" % bot.getMe().username)],
-            [InlineKeyboardButton(text="News about Octeon", url=settings.NEWS_LINK)],
-            [InlineKeyboardButton(text="Chat about Octeon", url=settings.CHAT_LINK)],
-            ]
-            )
-            bot.sendMessage(update.message.chat.id,
-            "Hello, I am %s, a telegram bot with various features, to know more, click on button below" % me.first_name,
-            reply_markup=keyboard)
+    if not PINKY.check_banned(update.message.chat_id):
+        me = bot.getMe()
+        for user in update.message.new_chat_members:
+            if user == me:
+                keyboard = InlineKeyboardMarkup(
+                [
+                [InlineKeyboardButton(text="List commands in PM", url="http://t.me/%s?start=help" % bot.getMe().username)],
+                [InlineKeyboardButton(text="News about Octeon", url=settings.NEWS_LINK)],
+                [InlineKeyboardButton(text="Chat about Octeon", url=settings.CHAT_LINK)],
+                ]
+                )
+                bot.sendMessage(update.message.chat.id,
+                "Hello, I am %s, a telegram bot with various features, to know more, click on button below" % me.first_name,
+                reply_markup=keyboard)
 
 
 @run_async
@@ -299,31 +306,32 @@ def inlinebutton(bot, update):
 
 @run_async
 def onmessage_handle(bot, update):
-    pinkyresp = PINKY.handle_message(update)
-    for handle in pinkyresp:
-        reply = handle(bot, update)
-        message = update.message
-        if reply is None:
-            continue
-        elif reply.photo:
-            msg = message.reply_photo(reply.photo,
-                                      caption=reply.text,
-                                      reply_markup=reply.inline_keyboard)
-        elif reply.file:
-            msg = message.reply_document(document=reply.file,
-                                         caption=reply.text,
+    if not PINKY.check_banned(update.message.chat_id):
+        pinkyresp = PINKY.handle_message(update)
+        for handle in pinkyresp:
+            reply = handle(bot, update)
+            message = update.message
+            if reply is None:
+                continue
+            elif reply.photo:
+                msg = message.reply_photo(reply.photo,
+                                          caption=reply.text,
+                                          reply_markup=reply.inline_keyboard)
+            elif reply.file:
+                msg = message.reply_document(document=reply.file,
+                                             caption=reply.text,
+                                             reply_markup=reply.inline_keyboard)
+            else:
+                msg = message.reply_text(reply.text,
+                                         parse_mode=reply.parse_mode,
                                          reply_markup=reply.inline_keyboard)
-        else:
-            msg = message.reply_text(reply.text,
-                                     parse_mode=reply.parse_mode,
-                                     reply_markup=reply.inline_keyboard)
-        if reply.failed:
-            msdict = msg.to_dict()
-            msdict["chat_id"] = msg.chat_id
-            msdict["user_id"] = update.message.from_user.id
-            kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton("Delete this message",
-                                                                   callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
-            msg.edit_reply_markup(reply_markup=kbrmrkup)
+            if reply.failed:
+                msdict = msg.to_dict()
+                msdict["chat_id"] = msg.chat_id
+                msdict["user_id"] = update.message.from_user.id
+                kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton("Delete this message",
+                                                                       callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
+                msg.edit_reply_markup(reply_markup=kbrmrkup)
 
 
 def error_handle(bot, update, error):
