@@ -204,7 +204,7 @@ def command_handle(bot: Bot, update: Update):
                 else:
                     message = update.message.reply_to_message
                 try:
-                    reply = function(bot, update, update.message.from_user, args)
+                    reply = pinkyresp(bot, update, update.message.from_user, args)
                 except Exception as e:
                     bot.sendMessage(settings.ADMIN,
                                     "Error occured in update:" +
