@@ -8,6 +8,7 @@ import sys
 import warnings
 import html
 import textwrap
+import traceback
 import json
 from html import escape
 from pprint import pformat
@@ -48,6 +49,7 @@ class Octeon_PTB(octeon.OcteonCore):
         else:
             with open(os.path.normpath("plugdata/banned.json"), 'w') as f:
                 f.write("{}")
+            self.banned = {}
         self.banned_chat_message = "Hi. I am sorry, but my admin/me blocked this chat, so I will leave it.\nReason: %s.\nPlease contact bot admin for unbanning this chat"
         self.updater = updater
         self.dispatcher = updater.dispatcher
@@ -83,7 +85,16 @@ class Octeon_PTB(octeon.OcteonCore):
                                                                                update.message.from_user.username,
                                                                                update.message.from_user.id,
                                                                                update.message.text)
-                    reply = function(bot, update, update.message.from_user, args)
+                    try:
+                        reply = function(bot, update, update.message.from_user, args)
+                    except Exception as e:
+                        bot.sendMessage(settings.ADMIN,
+                                        "Error occured in update:" +
+                                        "\n<code>%s</code>\n" % html.escape(str(update)) +
+                                        "Traceback:" +
+                                        "\n<code>%s</code>" % html.escape(traceback.format_exc()),
+                                        parse_mode='HTML')
+                        reply = octeon.message("I am sorry, unknown error occured during working with your request, Admin were notified", failed=True)
                     message = update.message
                     if reply is None:
                         return
@@ -111,6 +122,7 @@ class Octeon_PTB(octeon.OcteonCore):
                         kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton("Delete this message",
                                                                                callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
                         msg.edit_reply_markup(reply_markup=kbrmrkup)
+
         if not command.endswith("/"):
             self.dispatcher.add_handler(CommandHandler(command=command[1:], callback=handler, pass_args=True))
 
@@ -191,7 +203,16 @@ def command_handle(bot: Bot, update: Update):
                     message = update.message
                 else:
                     message = update.message.reply_to_message
-                reply = pinkyresp(bot, update, user, args)
+                try:
+                    reply = function(bot, update, update.message.from_user, args)
+                except Exception as e:
+                    bot.sendMessage(settings.ADMIN,
+                                    "Error occured in update:" +
+                                    "\n<code>%s</code>\n" % html.escape(str(update)) +
+                                    "Traceback:" +
+                                    "\n<code>%s</code>" % html.escape(traceback.format_exc()),
+                                    parse_mode='HTML')
+                    reply = octeon.message("I am sorry, unknown error occured during working with your request, Admin were notified", failed=True)
                 if reply is None:
                     return
                 elif not isinstance(reply, octeon.message):
