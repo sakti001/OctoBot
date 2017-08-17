@@ -133,8 +133,8 @@ class Octeon_PTB(octeon.OcteonCore):
         kbd = InlineKeyboardMarkup(
         [
         [InlineKeyboardButton(text="List commands in PM", url="http://t.me/%s?start=help" % bot.getMe().username)],
-        [InlineKeyboardButton(text="News about Octeon", url=settings.NEWS_LINK)],
-        [InlineKeyboardButton(text="Chat about Octeon", url=settings.CHAT_LINK)],
+        [InlineKeyboardButton(text="Octeon News Channel", url=settings.NEWS_LINK)],
+        [InlineKeyboardButton(text="Octeon Dev Chat", url=settings.CHAT_LINK)],
         ]
         )
         return octeon.message("Hi! I am Octeon, %s bot with random stuff!\nTo see my commands, type: /help" % self.platform, inline_keyboard=kbd)

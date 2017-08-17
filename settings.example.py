@@ -36,3 +36,6 @@ YANDEX_TRANSLATION_TOKEN = ""
 CHAT_LINK = ""
 # News channel link
 NEWS_LINK = ""
+ABOUT_TEXT = """
+Powered by Python-Telegram-Bot, Admin:@username
+"""
