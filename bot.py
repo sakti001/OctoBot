@@ -41,6 +41,7 @@ Description: <i>%(description)s</i>
 Additional info and examples:
 <i>%(docs)s</i>
 """
+
 class Octeon_PTB(octeon.OcteonCore):
     def __init__(self, updater):
         if os.path.exists(os.path.normpath("plugdata/banned.json")):
@@ -331,7 +332,9 @@ def inlinebutton(bot, update):
         else:
             query.answer("You are not the one who sent this command!")
     else:
-        PINKY.handle_inline_button(query)(bot, update, query)
+        presp = PINKY.handle_inline_button(query)
+        if presp:
+            presp(bot, update, query)
 
 @run_async
 def onmessage_handle(bot, update):
@@ -395,3 +398,13 @@ if __name__ == '__main__':
         LOGGER.info("Webhook is OFF")
         UPDATER.start_polling(clean=True)
         # UPDATER.idle()
+    badplugins = 0
+    for plugin in PINKY.plugins:
+        if plugin["state"] != "OK":
+            badplugins += 1
+    UPDATER.bot.sendMessage(settings.ADMIN,
+        "Octeon started up.\n" + 
+        str(len(PINKY.plugins)) + " plugins total\n"  +
+        str(badplugins) + " plugins were not loaded\n" +
+        str(len(PINKY.plugins) - badplugins) + " plugins were loaded OK"
+    )
