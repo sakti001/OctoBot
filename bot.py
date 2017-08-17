@@ -81,10 +81,10 @@ class Octeon_PTB(octeon.OcteonCore):
                     "/")) > 2 and update.message.text.startswith(command)
                 state_mention_command = update.message.text.startswith(command + "@")
                 if state_only_command or state_word_swap or state_mention_command:
-                    logging.getLogger("Chat-%s" % update.message.chat.id).info("User %s [%s] requested %s",
-                                                                               update.message.from_user.username,
-                                                                               update.message.from_user.id,
-                                                                               update.message.text)
+                    logging.getLogger("Chat-%s [%s]" % (update.message.chat.title, update.message.chat.id)).info("User %s [%s] requested %s.",
+                                                                                                                 update.message.from_user.username,
+                                                                                                                 update.message.from_user.id,
+                                                                                                                 update.message.text)
                     try:
                         reply = function(bot, update, update.message.from_user, args)
                     except Exception as e:
@@ -169,7 +169,6 @@ class Octeon_PTB(octeon.OcteonCore):
         if ban:
             self.updater.bot.sendMessage(update.message.chat.id, self.banned_chat_message % ban)
             self.updater.bot.leaveChat(update.message.chat.id)
-
 
 
 
@@ -331,6 +330,8 @@ def inlinebutton(bot, update):
             query.answer("Message deleted")
         else:
             query.answer("You are not the one who sent this command!")
+    else:
+        PINKY.handle_inline_button(query)(bot, update, query)
 
 @run_async
 def onmessage_handle(bot, update):
