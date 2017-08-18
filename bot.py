@@ -42,7 +42,9 @@ Additional info and examples:
 <i>%(docs)s</i>
 """
 
+
 class Octeon_PTB(octeon.OcteonCore):
+
     def __init__(self, updater):
         if os.path.exists(os.path.normpath("plugdata/banned.json")):
             with open(os.path.normpath("plugdata/banned.json")) as f:
@@ -57,7 +59,6 @@ class Octeon_PTB(octeon.OcteonCore):
         octeon.OcteonCore.__init__(self)
         self.platform = "Telegram"
 
-
     def gen_help(self):
         docs = ""
         for plugin in self.plugins:
@@ -67,11 +68,11 @@ class Octeon_PTB(octeon.OcteonCore):
                         if command["hidden"]:
                             continue
                     docs += "%s - <i>%s</i>\n" % (command["command"],
-                                           command["description"])
+                                                  command["description"])
         docs += "\nYou can find more info about command by typing after /help, like this: <pre>/help /cash</pre>"
         return docs
 
-    def create_command_handler(self, command, function):
+    def create_command_handler(self, command, function, minimal_args=0):
         def handler(bot, update, args):
             if update.message.chat.id in self.disabled:
                 return
@@ -80,22 +81,29 @@ class Octeon_PTB(octeon.OcteonCore):
                     command + " ")
                 state_word_swap = len(update.message.text.split(
                     "/")) > 2 and update.message.text.startswith(command)
-                state_mention_command = update.message.text.startswith(command + "@")
+                state_mention_command = update.message.text.startswith(
+                    command + "@")
                 if state_only_command or state_word_swap or state_mention_command:
                     logging.getLogger("Chat-%s [%s]" % (update.message.chat.title, update.message.chat.id)).info("User %s [%s] requested %s.",
                                                                                                                  update.message.from_user.username,
                                                                                                                  update.message.from_user.id,
                                                                                                                  update.message.text)
-                    try:
-                        reply = function(bot, update, update.message.from_user, args)
-                    except Exception as e:
-                        bot.sendMessage(settings.ADMIN,
-                                        "Error occured in update:" +
-                                        "\n<code>%s</code>\n" % html.escape(str(update)) +
-                                        "Traceback:" +
-                                        "\n<code>%s</code>" % html.escape(traceback.format_exc()),
-                                        parse_mode='HTML')
-                        reply = octeon.message("I am sorry, unknown error occured during working with your request, Admin were notified", failed=True)
+                    if not len(args) < minimal_args:
+                        try:
+                            reply = function(
+                                bot, update, update.message.from_user, args)
+                        except Exception as e:
+                            bot.sendMessage(settings.ADMIN,
+                                            "Error occured in update:" +
+                                            "\n<code>%s</code>\n" % html.escape(str(update)) +
+                                            "Traceback:" +
+                                            "\n<code>%s</code>" % html.escape(
+                                                traceback.format_exc()),
+                                            parse_mode='HTML')
+                            reply = octeon.message(
+                                "I am sorry, unknown error occured during working with your request, Admin were notified", failed=True)
+                    else:
+                        reply = octeon.message("Not enough arguments supplied.\nPlease refer to documentation: <code>/help " + command + "</code>", parse_mode="HTML")
                     message = update.message
                     if reply is None:
                         return
@@ -125,18 +133,22 @@ class Octeon_PTB(octeon.OcteonCore):
                         msg.edit_reply_markup(reply_markup=kbrmrkup)
 
         if not command.endswith("/"):
-            self.dispatcher.add_handler(CommandHandler(command=command[1:], callback=handler, pass_args=True))
+            self.dispatcher.add_handler(CommandHandler(
+                command=command[1:], callback=handler, pass_args=True))
 
     def coreplug_start(self, bot, update, user, args):
         if len(args) > 0:
             if args[0] == "help" and update.message.chat.type == "private":
                 return octeon.message(self.gen_help(), parse_mode="HTML")
         kbd = InlineKeyboardMarkup(
-        [
-        [InlineKeyboardButton(text="List commands in PM", url="http://t.me/%s?start=help" % bot.getMe().username)],
-        [InlineKeyboardButton(text="Octeon News Channel", url=settings.NEWS_LINK)],
-        [InlineKeyboardButton(text="Octeon Dev Chat", url=settings.CHAT_LINK)],
-        ]
+            [
+                [InlineKeyboardButton(
+                    text="List commands in PM", url="http://t.me/%s?start=help" % bot.getMe().username)],
+                [InlineKeyboardButton(
+                    text="Octeon News Channel", url=settings.NEWS_LINK)],
+                [InlineKeyboardButton(
+                    text="Octeon Dev Chat", url=settings.CHAT_LINK)],
+            ]
         )
         return octeon.message("Hi! I am Octeon, %s bot with random stuff!\nTo see my commands, type: /help" % self.platform, inline_keyboard=kbd)
 
@@ -145,17 +157,20 @@ class Octeon_PTB(octeon.OcteonCore):
             for plugin in self.plugins:
                 for command in plugin["commands"]:
                     if args[0].lower() == command["command"].lower():
-                        info = {"command":args[0], "description":"Not available", "docs":"Not available"}
+                        info = {"command": args[
+                            0], "description": "Not available", "docs": "Not available"}
                         info["description"] = command["description"]
                         if command["function"].__doc__:
-                            info["docs"] = html.escape(textwrap.dedent(command["function"].__doc__))
+                            info["docs"] = html.escape(
+                                textwrap.dedent(command["function"].__doc__))
                         return octeon.message(COMMAND_INFO % info, parse_mode="HTML")
             return "I dont know this command"
         else:
             if update.message.chat.type == "private":
                 return octeon.message(self.gen_help(), parse_mode="HTML")
             else:
-                keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(text="List commands in PM", url="http://t.me/%s?start=help" % bot.getMe().username)]])
+                keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(
+                    text="List commands in PM", url="http://t.me/%s?start=help" % bot.getMe().username)]])
                 return octeon.message("To prevent flood, use this command in PM", inline_keyboard=keyboard)
 
     def check_banned(self, chat_id):
@@ -164,13 +179,12 @@ class Octeon_PTB(octeon.OcteonCore):
         else:
             return False
 
-
     def coreplug_check_banned(self, bot, update):
         ban = self.check_banned(update.message.chat_id)
         if ban:
-            self.updater.bot.sendMessage(update.message.chat.id, self.banned_chat_message % ban)
+            self.updater.bot.sendMessage(
+                update.message.chat.id, self.banned_chat_message % ban)
             self.updater.bot.leaveChat(update.message.chat.id)
-
 
 
 PINKY = Octeon_PTB(UPDATER)
@@ -183,6 +197,7 @@ def tracker(_: Bot, update: Update, __, ___):
             return "<pre>" + escape(pformat(TRACKER[reply.message_id])) + "</pre>", constants.HTMLTXT
         else:
             return "I dont remember sending this message..."
+
 
 @run_async
 def command_handle(bot: Bot, update: Update):
@@ -204,15 +219,18 @@ def command_handle(bot: Bot, update: Update):
                 else:
                     message = update.message.reply_to_message
                 try:
-                    reply = pinkyresp(bot, update, update.message.from_user, args)
+                    reply = pinkyresp(
+                        bot, update, update.message.from_user, args)
                 except Exception as e:
                     bot.sendMessage(settings.ADMIN,
                                     "Error occured in update:" +
                                     "\n<code>%s</code>\n" % html.escape(str(update)) +
                                     "Traceback:" +
-                                    "\n<code>%s</code>" % html.escape(traceback.format_exc()),
+                                    "\n<code>%s</code>" % html.escape(
+                                        traceback.format_exc()),
                                     parse_mode='HTML')
-                    reply = octeon.message("I am sorry, unknown error occured during working with your request, Admin were notified", failed=True)
+                    reply = octeon.message(
+                        "I am sorry, unknown error occured during working with your request, Admin were notified", failed=True)
                 if reply is None:
                     return
                 elif not isinstance(reply, octeon.message):
@@ -240,6 +258,7 @@ def command_handle(bot: Bot, update: Update):
                                                                            callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
                     msg.edit_reply_markup(reply_markup=kbrmrkup)
 
+
 @run_async
 def new_someone(bot: Bot, update: Update):
     if not PINKY.check_banned(update.message.chat_id):
@@ -247,15 +266,18 @@ def new_someone(bot: Bot, update: Update):
         for user in update.message.new_chat_members:
             if user == me:
                 keyboard = InlineKeyboardMarkup(
-                [
-                [InlineKeyboardButton(text="List commands in PM", url="http://t.me/%s?start=help" % bot.getMe().username)],
-                [InlineKeyboardButton(text="News about Octeon", url=settings.NEWS_LINK)],
-                [InlineKeyboardButton(text="Chat about Octeon", url=settings.CHAT_LINK)],
-                ]
+                    [
+                        [InlineKeyboardButton(
+                            text="List commands in PM", url="http://t.me/%s?start=help" % bot.getMe().username)],
+                        [InlineKeyboardButton(
+                            text="News about Octeon", url=settings.NEWS_LINK)],
+                        [InlineKeyboardButton(
+                            text="Chat about Octeon", url=settings.CHAT_LINK)],
+                    ]
                 )
                 bot.sendMessage(update.message.chat.id,
-                "Hello, I am %s, a telegram bot with various features, to know more, click on button below" % me.first_name,
-                reply_markup=keyboard)
+                                "Hello, I am %s, a telegram bot with various features, to know more, click on button below" % me.first_name,
+                                reply_markup=keyboard)
 
 
 @run_async
@@ -276,7 +298,8 @@ def inline_handle(bot: Bot, update: Update):
                 id=uuid4(),
                 title=pinkyresp[1],
                 description=re.sub(cleanr, "", reply.text.split("\n")[0]),
-                input_message_content=InputTextMessageContent(reply.text, parse_mode="HTML")
+                input_message_content=InputTextMessageContent(
+                    reply.text, parse_mode="HTML")
             ))
         elif reply.parse_mode == "MARKDOWN":
             result.append(InlineQueryResultArticle(
@@ -292,7 +315,8 @@ def inline_handle(bot: Bot, update: Update):
                                                      thumb_url=reply.photo,
                                                      id=uuid4()))
             else:
-                pic = bot.sendPhoto(chat_id=settings.CHANNEL, photo=reply.photo)
+                pic = bot.sendPhoto(
+                    chat_id=settings.CHANNEL, photo=reply.photo)
                 pic = pic.photo[0].file_id
                 result.append(InlineQueryResultCachedPhoto(
                     photo_file_id=pic,
@@ -317,6 +341,7 @@ def inline_handle(bot: Bot, update: Update):
                                switch_pm_parameter="help",
                                cache_time=1)
 
+
 @run_async
 def inlinebutton(bot, update):
     query = update.callback_query
@@ -335,6 +360,7 @@ def inlinebutton(bot, update):
         presp = PINKY.handle_inline_button(query)
         if presp:
             presp(bot, update, query)
+
 
 @run_async
 def onmessage_handle(bot, update):
@@ -383,8 +409,10 @@ if __name__ == '__main__':
     DISPATCHER.add_handler(MessageHandler(Filters.command, command_handle))
     DISPATCHER.add_handler(InlineQueryHandler(inline_handle))
     DISPATCHER.add_handler(CallbackQueryHandler(inlinebutton))
-    DISPATCHER.add_handler(MessageHandler(Filters.status_update.new_chat_members, new_someone))
-    DISPATCHER.add_handler(MessageHandler(Filters.all, PINKY.coreplug_check_banned), group=1)
+    DISPATCHER.add_handler(MessageHandler(
+        Filters.status_update.new_chat_members, new_someone))
+    DISPATCHER.add_handler(MessageHandler(
+        Filters.all, PINKY.coreplug_check_banned), group=1)
     DISPATCHER.add_error_handler(error_handle)
     if settings.WEBHOOK_ON:
         LOGGER.info("Webhook is ON")
@@ -403,8 +431,9 @@ if __name__ == '__main__':
         if plugin["state"] != "OK":
             badplugins += 1
     UPDATER.bot.sendMessage(settings.ADMIN,
-        "Octeon started up.\n" + 
-        str(len(PINKY.plugins)) + " plugins total\n"  +
-        str(badplugins) + " plugins were not loaded\n" +
-        str(len(PINKY.plugins) - badplugins) + " plugins were loaded OK"
-    )
+                            "Octeon started up.\n" +
+                            str(len(PINKY.plugins)) + " plugins total\n" +
+                            str(badplugins) + " plugins were not loaded\n" +
+                            str(len(PINKY.plugins) - badplugins) +
+                            " plugins were loaded OK"
+                            )
