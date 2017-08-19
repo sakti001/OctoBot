@@ -423,10 +423,12 @@ if __name__ == '__main__':
                               url_path=settings.WEBHOOK_URL_PATH,
                               key=settings.WEBHOOK_KEY,
                               cert=settings.WEBHOOK_CERT,
-                              webhook_url=settings.WEBHOOK_URL)
+                              webhook_url=settings.WEBHOOK_URL,
+                              bootstrap_retries=-1)
     else:
         LOGGER.info("Webhook is OFF")
-        UPDATER.start_polling(clean=True)
+        UPDATER.start_polling(clean=True,
+                              bootstrap_retries=-1 )
         # UPDATER.idle()
     badplugins = 0
     for plugin in PINKY.plugins:
