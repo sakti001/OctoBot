@@ -317,8 +317,8 @@ def inline_handle(bot: Bot, update: Update):
             if type(reply.photo) == str:
                 result.append(InlineQueryResultPhoto(photo_url=reply.photo,
                                                      thumb_url=reply.photo,
-                                                     id=uuid4()),
-                                                     reply_markup=reply.inline_keyboard
+                                                     id=uuid4(),
+                                                     reply_markup=reply.inline_keyboard)
                 )
             else:
                 pic = bot.sendPhoto(
