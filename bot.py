@@ -25,8 +25,10 @@ from telegram.ext import (CallbackQueryHandler, CommandHandler, Filters,
 import octeon
 import settings
 from telegram.ext.dispatcher import run_async
-from time import sleep
+import time
+
 global TRACKER
+start = time.time()
 MAIN_PID = os.getpid()
 cleanr = re.compile('<.*?>')
 logging.basicConfig(level=logging.INFO)
@@ -299,7 +301,8 @@ def inline_handle(bot: Bot, update: Update):
                 title=pinkyresp[1],
                 description=re.sub(cleanr, "", reply.text.split("\n")[0]),
                 input_message_content=InputTextMessageContent(
-                    reply.text, parse_mode="HTML")
+                    reply.text, parse_mode="HTML"),
+                reply_markup=reply.inline_keyboard
             ))
         elif reply.parse_mode == "MARKDOWN":
             result.append(InlineQueryResultArticle(
@@ -307,13 +310,16 @@ def inline_handle(bot: Bot, update: Update):
                 title=pinkyresp[1],
                 description=reply.text.split("\n")[0],
                 input_message_content=InputTextMessageContent(
-                    reply.text, parse_mode="MARKDOWN")
+                    reply.text, parse_mode="MARKDOWN"),
+                reply_markup=reply.inline_keyboard
             ))
         elif reply.photo:
             if type(reply.photo) == str:
                 result.append(InlineQueryResultPhoto(photo_url=reply.photo,
                                                      thumb_url=reply.photo,
-                                                     id=uuid4()))
+                                                     id=uuid4()),
+                                                     reply_markup=reply.inline_keyboard
+                )
             else:
                 pic = bot.sendPhoto(
                     chat_id=settings.CHANNEL, photo=reply.photo)
@@ -321,21 +327,17 @@ def inline_handle(bot: Bot, update: Update):
                 result.append(InlineQueryResultCachedPhoto(
                     photo_file_id=pic,
                     caption=reply.text,
-                    id=uuid4()
+                    id=uuid4(),
+                    reply_markup=reply.inline_keyboard
                 ))
         elif not reply.text == "":
             result.append(InlineQueryResultArticle(
                 id=uuid4(),
                 title=pinkyresp[1],
                 description=reply.text.split("\n")[0],
-                input_message_content=InputTextMessageContent(reply.text)
+                input_message_content=InputTextMessageContent(reply.text),
+                reply_markup=reply.inline_keyboard
             ))
-        elif reply.photo and reply.inline_keyboard:
-            result.append(InlineQueryResultPhoto(photo_url=reply.photo,
-                                                 thumb_url=reply.photo,
-                                                 id=uuid4(),
-                                                 caption=reply.text,
-                                                 reply_markup=reply.inline_keyboard))
     update.inline_query.answer(results=result,
                                switch_pm_text="List commands",
                                switch_pm_parameter="help",
@@ -435,5 +437,6 @@ if __name__ == '__main__':
                             str(len(PINKY.plugins)) + " plugins total\n" +
                             str(badplugins) + " plugins were not loaded\n" +
                             str(len(PINKY.plugins) - badplugins) +
-                            " plugins were loaded OK"
+                            " plugins were loaded OK\n" + 
+                            "Started up in " + str(round(time.time() - start, 2))
                             )
