@@ -136,7 +136,7 @@ class Octeon_PTB(octeon.OcteonCore):
 
         if not command.endswith("/"):
             self.dispatcher.add_handler(CommandHandler(
-                command=command[1:], callback=handler, pass_args=True))
+                command=command[1:], callback=handler, pass_args=True),group=1)
 
     def coreplug_start(self, bot, update, user, args):
         if len(args) > 0:
@@ -367,31 +367,32 @@ def inlinebutton(bot, update):
 @run_async
 def onmessage_handle(bot, update):
     if not PINKY.check_banned(update.message.chat_id):
-        pinkyresp = PINKY.handle_message(update)
-        for handle in pinkyresp:
-            reply = handle(bot, update)
-            message = update.message
-            if reply is None:
-                continue
-            elif reply.photo:
-                msg = message.reply_photo(reply.photo,
-                                          caption=reply.text,
-                                          reply_markup=reply.inline_keyboard)
-            elif reply.file:
-                msg = message.reply_document(document=reply.file,
-                                             caption=reply.text,
+        if update.message:
+            pinkyresp = PINKY.handle_message(update)
+            for handle in pinkyresp:
+                reply = handle(bot, update)
+                message = update.message
+                if reply is None:
+                    continue
+                elif reply.photo:
+                    msg = message.reply_photo(reply.photo,
+                                              caption=reply.text,
+                                              reply_markup=reply.inline_keyboard)
+                elif reply.file:
+                    msg = message.reply_document(document=reply.file,
+                                                 caption=reply.text,
+                                                 reply_markup=reply.inline_keyboard)
+                else:
+                    msg = message.reply_text(reply.text,
+                                             parse_mode=reply.parse_mode,
                                              reply_markup=reply.inline_keyboard)
-            else:
-                msg = message.reply_text(reply.text,
-                                         parse_mode=reply.parse_mode,
-                                         reply_markup=reply.inline_keyboard)
-            if reply.failed:
-                msdict = msg.to_dict()
-                msdict["chat_id"] = msg.chat_id
-                msdict["user_id"] = update.message.from_user.id
-                kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton("Delete this message",
-                                                                       callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
-                msg.edit_reply_markup(reply_markup=kbrmrkup)
+                if reply.failed:
+                    msdict = msg.to_dict()
+                    msdict["chat_id"] = msg.chat_id
+                    msdict["user_id"] = update.message.from_user.id
+                    kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton("Delete this message",
+                                                                           callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
+                    msg.edit_reply_markup(reply_markup=kbrmrkup)
 
 
 def error_handle(bot, update, error):
@@ -407,14 +408,14 @@ def error_handle(bot, update, error):
 
 if __name__ == '__main__':
     LOGGER.info("Adding handlers...")
-    DISPATCHER.add_handler(MessageHandler(Filters.text, onmessage_handle))
-    DISPATCHER.add_handler(MessageHandler(Filters.command, command_handle))
+    DISPATCHER.add_handler(MessageHandler(Filters.all, onmessage_handle), group=0)
+    DISPATCHER.add_handler(MessageHandler(Filters.command, command_handle), group=1)
     DISPATCHER.add_handler(InlineQueryHandler(inline_handle))
     DISPATCHER.add_handler(CallbackQueryHandler(inlinebutton))
     DISPATCHER.add_handler(MessageHandler(
-        Filters.status_update.new_chat_members, new_someone))
+        Filters.status_update.new_chat_members, new_someone), group=1)
     DISPATCHER.add_handler(MessageHandler(
-        Filters.all, PINKY.coreplug_check_banned), group=1)
+        Filters.all, PINKY.coreplug_check_banned), group=0)
     DISPATCHER.add_error_handler(error_handle)
     if settings.WEBHOOK_ON:
         LOGGER.info("Webhook is ON")
