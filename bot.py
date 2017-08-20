@@ -177,7 +177,7 @@ class Octeon_PTB(octeon.OcteonCore):
                             info["docs"] = html.escape(
                                 textwrap.dedent(command["function"].__doc__))
                         return octeon.message(_(self.locales["help_format"]) % info, parse_mode="HTML")
-            return octeon.locales.get_localized(self.locales["unknown_help_command"], update.message.chat.id)
+            return octeon.locale.get_localized(self.locales["unknown_help_command"], update.message.chat.id)
         else:
             if update.message.chat.type == "private":
                 return octeon.message(self.gen_help(update.message.chat.id), parse_mode="HTML")
