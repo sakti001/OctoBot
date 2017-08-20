@@ -139,7 +139,7 @@ class Octeon_PTB(octeon.OcteonCore):
                         msdict = msg.to_dict()
                         msdict["chat_id"] = msg.chat_id
                         msdict["user_id"] = update.message.from_user.id
-                        kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton(_(self.locales["delete_message"]),
+                        kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton(_(self.locales["message_delete"]),
                                                                                callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
                         msg.edit_reply_markup(reply_markup=kbrmrkup)
 
@@ -380,7 +380,7 @@ def onmessage_handle(bot, update):
                     msdict = msg.to_dict()
                     msdict["chat_id"] = msg.chat_id
                     msdict["user_id"] = update.message.from_user.id
-                    kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton(octeon.locale.get_localized(octeon.locale.locale_string("delete_message", "core"),
+                    kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton(octeon.locale.get_localized(octeon.locale.locale_string("message_delete", "core"),
                                                                                                        update.message.chat.id),
                                                                            callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
                     msg.edit_reply_markup(reply_markup=kbrmrkup)
