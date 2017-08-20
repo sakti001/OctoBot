@@ -55,13 +55,18 @@ class Octeon_PTB(octeon.OcteonCore):
             with open(os.path.normpath("plugdata/banned.json"), 'w') as f:
                 f.write("{}")
             self.banned = {}
-        self.banned_chat_message = "Hi. I am sorry, but my admin/me blocked this chat, so I will leave it.\nReason: %s.\nPlease contact bot admin for unbanning this chat"
+        self.locale_box = "core"
+        self.locales = {}
+        with open(os.path.normpath("locale/core/en.json")) as f:
+            for localeinf in json.load(f):
+                self.locales[localeinf] = octeon.locale.locale_string(
+                    localeinf, self.locale_box)
         self.updater = updater
         self.dispatcher = updater.dispatcher
         octeon.OcteonCore.__init__(self)
         self.platform = "Telegram"
 
-    def gen_help(self):
+    def gen_help(self, uid):
         docs = ""
         for plugin in self.plugins:
             for command in plugin["commands"]:
@@ -71,11 +76,14 @@ class Octeon_PTB(octeon.OcteonCore):
                             continue
                     docs += "%s - <i>%s</i>\n" % (command["command"],
                                                   command["description"])
-        docs += "\nYou can find more info about command by typing after /help, like this: <pre>/help /cash</pre>"
+        docs += "\n" + \
+            octeon.locale.get_localized(self.locales["help_find_more"], uid)
         return docs
 
     def create_command_handler(self, command, function, minimal_args=0):
         def handler(bot, update, args):
+            _ = lambda x: octeon.locale.get_localized(
+                x, update.message.chat.id)
             if update.message.chat.id in self.disabled:
                 return
             else:
@@ -103,9 +111,10 @@ class Octeon_PTB(octeon.OcteonCore):
                                                 traceback.format_exc()),
                                             parse_mode='HTML')
                             reply = octeon.message(
-                                "I am sorry, unknown error occured during working with your request, Admin were notified", failed=True)
+                                _, failed=True)
                     else:
-                        reply = octeon.message("Not enough arguments supplied.\nPlease refer to documentation: <code>/help " + command + "</code>", parse_mode="HTML")
+                        reply = octeon.message(
+                            _(self.locales["not_enough_arguments"]) % command, parse_mode="HTML")
                     message = update.message
                     if reply is None:
                         return
@@ -130,50 +139,52 @@ class Octeon_PTB(octeon.OcteonCore):
                         msdict = msg.to_dict()
                         msdict["chat_id"] = msg.chat_id
                         msdict["user_id"] = update.message.from_user.id
-                        kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton("Delete this message",
+                        kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton(_(self.locales["delete_message"]),
                                                                                callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
                         msg.edit_reply_markup(reply_markup=kbrmrkup)
 
         if not command.endswith("/"):
             self.dispatcher.add_handler(CommandHandler(
-                command=command[1:], callback=handler, pass_args=True),group=1)
+                command=command[1:], callback=handler, pass_args=True), group=1)
 
     def coreplug_start(self, bot, update, user, args):
+        _ = lambda x: octeon.locale.get_localized(x, update.message.chat.id)
         if len(args) > 0:
             if args[0] == "help" and update.message.chat.type == "private":
-                return octeon.message(self.gen_help(), parse_mode="HTML")
+                return octeon.message(self.gen_help(update.message.chat.id), parse_mode="HTML")
         kbd = InlineKeyboardMarkup(
             [
                 [InlineKeyboardButton(
-                    text="List commands in PM", url="http://t.me/%s?start=help" % bot.getMe().username)],
+                    text=_(self.locales["help_button"]), url="http://t.me/%s?start=help" % bot.getMe().username)],
                 [InlineKeyboardButton(
-                    text="Octeon News Channel", url=settings.NEWS_LINK)],
+                    text=_(self.locales["news_button"]), url=settings.NEWS_LINK)],
                 [InlineKeyboardButton(
-                    text="Octeon Dev Chat", url=settings.CHAT_LINK)],
+                    text=_(self.locales["chat_button"]), url=settings.CHAT_LINK)],
             ]
         )
-        return octeon.message("Hi! I am Octeon, %s bot with random stuff!\nTo see my commands, type: /help" % self.platform, inline_keyboard=kbd)
+        return octeon.message(_(self.locales["start"]) % bot.getMe().first_name, inline_keyboard=kbd)
 
     def coreplug_help(self, bot, update, user, args):
+        _ = lambda x: octeon.locale.get_localized(x, update.message.chat.id)
         if args:
             for plugin in self.plugins:
                 for command in plugin["commands"]:
                     if args[0].lower() == command["command"].lower():
                         info = {"command": args[
-                            0], "description": "Not available", "docs": "Not available"}
+                            0], "description": _(self.locales["not_available"]), "docs": _(self.locales["not_available"])}
                         info["description"] = command["description"]
                         if command["function"].__doc__:
                             info["docs"] = html.escape(
                                 textwrap.dedent(command["function"].__doc__))
-                        return octeon.message(COMMAND_INFO % info, parse_mode="HTML")
-            return "I dont know this command"
+                        return octeon.message(_(self.locales["help_format"]) % info, parse_mode="HTML")
+            return octeon.locales.get_localized(self.locales["unknown_help_command"], update.message.chat.id)
         else:
             if update.message.chat.type == "private":
-                return octeon.message(self.gen_help(), parse_mode="HTML")
+                return octeon.message(self.gen_help(update.message.chat.id), parse_mode="HTML")
             else:
                 keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(
-                    text="List commands in PM", url="http://t.me/%s?start=help" % bot.getMe().username)]])
-                return octeon.message("To prevent flood, use this command in PM", inline_keyboard=keyboard)
+                    text=_(self.locales["help_button_into_pm"]), url="http://t.me/%s?start=help" % bot.getMe().username)]])
+                return octeon.message(_(self.locales["help_button_into_pm_text"]), inline_keyboard=keyboard)
 
     def check_banned(self, chat_id):
         if str(chat_id) in self.banned:
@@ -185,20 +196,11 @@ class Octeon_PTB(octeon.OcteonCore):
         ban = self.check_banned(update.message.chat_id)
         if ban:
             self.updater.bot.sendMessage(
-                update.message.chat.id, self.banned_chat_message % ban)
+                update.message.chat.id, octeon.locale.get_localized(self.locales["chat_banned"]) % ban)
             self.updater.bot.leaveChat(update.message.chat.id)
 
 
 PINKY = Octeon_PTB(UPDATER)
-
-
-def tracker(_: Bot, update: Update, __, ___):
-    reply = update.message.reply_to_message
-    if reply:
-        if reply.message_id in TRACKER:
-            return "<pre>" + escape(pformat(TRACKER[reply.message_id])) + "</pre>", constants.HTMLTXT
-        else:
-            return "I dont remember sending this message..."
 
 
 @run_async
@@ -206,6 +208,7 @@ def command_handle(bot: Bot, update: Update):
     """
     Handles commands
     """
+    _ = lambda x: octeon.locale.get_localized(x, update.message.chat.id)
     if not PINKY.check_banned(update.message.chat_id):
         if update.message.reply_to_message and update.message.reply_to_message.photo:
             update.message.reply_to_message.text = update.message.reply_to_message.caption
@@ -222,7 +225,7 @@ def command_handle(bot: Bot, update: Update):
                     message = update.message.reply_to_message
                 try:
                     reply = pinkyresp(
-                        bot, update, update.message.from_user, args)
+                        bot, update, user, args)
                 except Exception as e:
                     bot.sendMessage(settings.ADMIN,
                                     "Error occured in update:" +
@@ -232,7 +235,7 @@ def command_handle(bot: Bot, update: Update):
                                         traceback.format_exc()),
                                     parse_mode='HTML')
                     reply = octeon.message(
-                        "I am sorry, unknown error occured during working with your request, Admin were notified", failed=True)
+                        _(PINKY.locales["error_occured"]), failed=True)
                 if reply is None:
                     return
                 elif not isinstance(reply, octeon.message):
@@ -256,30 +259,9 @@ def command_handle(bot: Bot, update: Update):
                     msdict = msg.to_dict()
                     msdict["chat_id"] = msg.chat_id
                     msdict["user_id"] = update.message.from_user.id
-                    kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton("Delete this message",
+                    kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton(_(PINKY.locales["message_delete"]),
                                                                            callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
                     msg.edit_reply_markup(reply_markup=kbrmrkup)
-
-
-@run_async
-def new_someone(bot: Bot, update: Update):
-    if not PINKY.check_banned(update.message.chat_id):
-        me = bot.getMe()
-        for user in update.message.new_chat_members:
-            if user == me:
-                keyboard = InlineKeyboardMarkup(
-                    [
-                        [InlineKeyboardButton(
-                            text="List commands in PM", url="http://t.me/%s?start=help" % bot.getMe().username)],
-                        [InlineKeyboardButton(
-                            text="News about Octeon", url=settings.NEWS_LINK)],
-                        [InlineKeyboardButton(
-                            text="Chat about Octeon", url=settings.CHAT_LINK)],
-                    ]
-                )
-                bot.sendMessage(update.message.chat.id,
-                                "Hello, I am %s, a telegram bot with various features, to know more, click on button below" % me.first_name,
-                                reply_markup=keyboard)
 
 
 @run_async
@@ -319,7 +301,7 @@ def inline_handle(bot: Bot, update: Update):
                                                      thumb_url=reply.photo,
                                                      id=uuid4(),
                                                      reply_markup=reply.inline_keyboard)
-                )
+                              )
             else:
                 pic = bot.sendPhoto(
                     chat_id=settings.CHANNEL, photo=reply.photo)
@@ -347,6 +329,7 @@ def inline_handle(bot: Bot, update: Update):
 @run_async
 def inlinebutton(bot, update):
     query = update.callback_query
+    _ = lambda x: octeon.locale.get_localized(PINKY.locales[x], query.from_user.id)
     if query.data.startswith("del"):
         data = query.data.split(":")[1:]
         goodpeople = [int(data[2]), settings.ADMIN]
@@ -355,9 +338,9 @@ def inlinebutton(bot, update):
                 goodpeople.append(int(admin.user.id))
         if int(query.from_user.id) in goodpeople:
             bot.deleteMessage(data[0], data[1])
-            query.answer("Message deleted")
+            query.answer(_("delete_success"))
         else:
-            query.answer("You are not the one who sent this command!")
+            query.answer(_("delete_failure"))
     else:
         presp = PINKY.handle_inline_button(query)
         if presp:
@@ -368,7 +351,14 @@ def inlinebutton(bot, update):
 def onmessage_handle(bot, update):
     if not PINKY.check_banned(update.message.chat_id):
         if update.message:
-            pinkyresp = PINKY.handle_message(update)
+            if update.message.new_chat_members:
+                me = bot.getMe()
+                for user in update.message.new_chat_members:
+                    if user == me:
+                        pinkyresp = [lambda bot, update:PINKY.coreplug_start(
+                            bot, update, None, [])]
+            else:
+                pinkyresp = PINKY.handle_message(update)
             for handle in pinkyresp:
                 reply = handle(bot, update)
                 message = update.message
@@ -390,7 +380,8 @@ def onmessage_handle(bot, update):
                     msdict = msg.to_dict()
                     msdict["chat_id"] = msg.chat_id
                     msdict["user_id"] = update.message.from_user.id
-                    kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton("Delete this message",
+                    kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton(octeon.locale.get_localized(octeon.locale.locale_string("delete_message", "core"),
+                                                                                                       update.message.chat.id),
                                                                            callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
                     msg.edit_reply_markup(reply_markup=kbrmrkup)
 
@@ -408,12 +399,14 @@ def error_handle(bot, update, error):
 
 if __name__ == '__main__':
     LOGGER.info("Adding handlers...")
-    DISPATCHER.add_handler(MessageHandler(Filters.all, onmessage_handle), group=0)
-    DISPATCHER.add_handler(MessageHandler(Filters.command, command_handle), group=1)
+    DISPATCHER.add_handler(MessageHandler(
+        Filters.all, onmessage_handle), group=0)
+    DISPATCHER.add_handler(MessageHandler(
+        Filters.command, command_handle), group=1)
     DISPATCHER.add_handler(InlineQueryHandler(inline_handle))
     DISPATCHER.add_handler(CallbackQueryHandler(inlinebutton))
-    DISPATCHER.add_handler(MessageHandler(
-        Filters.status_update.new_chat_members, new_someone), group=1)
+    # DISPATCHER.add_handler(MessageHandler(
+    #     Filters.status_update.new_chat_members, new_someone), group=0)
     DISPATCHER.add_handler(MessageHandler(
         Filters.all, PINKY.coreplug_check_banned), group=0)
     DISPATCHER.add_error_handler(error_handle)
@@ -429,7 +422,7 @@ if __name__ == '__main__':
     else:
         LOGGER.info("Webhook is OFF")
         UPDATER.start_polling(clean=True,
-                              bootstrap_retries=-1 )
+                              bootstrap_retries=-1)
         # UPDATER.idle()
     badplugins = 0
     for plugin in PINKY.plugins:
@@ -440,6 +433,7 @@ if __name__ == '__main__':
                             str(len(PINKY.plugins)) + " plugins total\n" +
                             str(badplugins) + " plugins were not loaded\n" +
                             str(len(PINKY.plugins) - badplugins) +
-                            " plugins were loaded OK\n" + 
-                            "Started up in " + str(round(time.time() - start, 2))
+                            " plugins were loaded OK\n" +
+                            "Started up in " +
+                            str(round(time.time() - start, 2))
                             )

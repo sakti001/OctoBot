@@ -6,3 +6,7 @@
 	path = octeon
 	url = https://github.com/OctoNezd/Octeon-Core.git
 	branch = master
+[submodule "locale"]
+	path = locale
+	url = https://github.com/OctoNezd/OcteonLocales.git
+	branch = master
