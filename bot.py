@@ -111,7 +111,7 @@ class Octeon_PTB(octeon.OcteonCore):
                                                 traceback.format_exc()),
                                             parse_mode='HTML')
                             reply = octeon.message(
-                                _, failed=True)
+                                _(self.locales["error_occured"]), failed=True)
                     else:
                         reply = octeon.message(
                             _(self.locales["not_enough_arguments"]) % command, parse_mode="HTML")
