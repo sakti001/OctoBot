@@ -19,8 +19,8 @@ from telegram import (Bot, InlineKeyboardButton, InlineKeyboardMarkup,
                       InlineQueryResultPhoto, InputTextMessageContent,
                       TelegramError, Update)
 from telegram.ext import (CallbackQueryHandler, CommandHandler, Filters,
-                          InlineQueryHandler, MessageHandler, Updater)
-
+                          InlineQueryHandler, MessageHandler, Updater, Dispatcher,
+                          dispatcher)
 # import constants
 import octeon
 import settings
@@ -31,7 +31,7 @@ global TRACKER
 start = time.time()
 MAIN_PID = os.getpid()
 cleanr = re.compile('<.*?>')
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=settings.LOG_LEVEL)
 TRACKER = {}
 BANNEDUSERS = []
 LOGGER = logging.getLogger("Octeon-Brain")
@@ -57,12 +57,15 @@ class Octeon_PTB(octeon.OcteonCore):
             self.banned = {}
         self.locale_box = "core"
         self.locales = {}
+        self.chat_last_handler = {}
+        self.ban_data = {}
         with open(os.path.normpath("locale/core/en.json")) as f:
             for localeinf in json.load(f):
                 self.locales[localeinf] = octeon.locale.locale_string(
                     localeinf, self.locale_box)
         self.updater = updater
         self.dispatcher = updater.dispatcher
+        self.dispatcher.process_update = self.process_update
         octeon.OcteonCore.__init__(self)
         self.platform = "Telegram"
 
@@ -199,6 +202,79 @@ class Octeon_PTB(octeon.OcteonCore):
                 update.message.chat.id, octeon.locale.get_localized(self.locales["chat_banned"]) % ban)
             self.updater.bot.leaveChat(update.message.chat.id)
 
+    def process_update(self, update):
+        """
+        Processes a single update.
+        Args:
+            update (:obj:`str` | :class:`telegram.Update` | :class:`telegram.TelegramError`):
+                The update to process.
+        """
+
+        # An error happened while polling
+        if isinstance(update, TelegramError):
+            self.dispatcher.dispatch_error(None, update)
+            return
+        for group in self.dispatcher.groups:
+            try:
+                for handler in (x for x in self.dispatcher.handlers[group] if x.check_update(update)):
+                    if update.message:
+                        if update.message.chat.id in self.ban_data:
+                            if time.time() > self.ban_data[update.message.chat.id]:
+                                del self.ban_data[update.message.chat.id]
+                                del self.chat_last_handler[update.message.chat.id]
+                            else:
+                                break
+                        if update.message.chat.id in self.chat_last_handler:
+                            t = self.chat_last_handler[update.message.chat.id]
+                            if t["handler"] == handler:
+                                if (time.time() - t["used"]) < settings.USAGE_COOLDOWN:
+                                    t["times_overused"] += 1
+                                else:
+                                    t["times_overused"] = 1
+                                if t["times_overused"] >= settings.IGNORE_USAGE_COUNT:
+                                    LOGGER.warning("Banning chat %s[%s] cause of overusing command", update.message.chat.title, update.message.chat.id)
+                                    self.updater.bot.sendMessage(update.message.chat.id,
+                                                                 octeon.locale.get_localized(self.locales["chat_ignored"], 
+                                                                 update.message.chat.id) % settings.USAGE_BAN)
+                                    self.ban_data[update.message.chat.id] = time.time() + settings.USAGE_BAN*60
+                                    break
+                                if t["times_overused"] >= settings.WARNING_USAGE_COUNT:
+                                    self.updater.bot.sendMessage(update.message.chat.id,
+                                                                 octeon.locale.get_localized(self.locales["stop_spamming"], update.message.chat.id))
+                                    break
+                        self.coreplug_check_banned(self.dispatcher.bot, update)
+                    handler.handle_update(update, self.dispatcher)
+                    LOGGER.debug(handler)
+                    if not isinstance(handler, MessageHandler):
+                        if update.message:
+                            if update.message.chat.id in self.chat_last_handler:
+                                self.chat_last_handler[update.message.chat.id]["used"] = time.time()
+                            else:
+                                self.chat_last_handler[update.message.chat.id] = {"handler":handler, "used":time.time(), "times_overused":1}
+                            LOGGER.debug(self.chat_last_handler[update.message.chat.id])
+                    break
+
+            # HACK: I cant find anywhere on importing this exception
+            # # Stop processing with any other handler. 
+            # except dispatcher.DispatcherHandlerStop:
+            #     self.dispatcher.logger.debug('Stopping further handlers due to DispatcherHandlerStop')
+            #     break
+
+            # Dispatch any error.
+            except TelegramError as te:
+                self.dispatcher.logger.warning('A TelegramError was raised while processing the Update')
+
+                try:
+                    self.dispatcher.dispatch_error(update, te)
+                except Dispatcher.DispatcherHandlerStop:
+                    self.dispatcher.logger.debug('Error handler stopped further handlers')
+                    break
+                except Exception:
+                    self.dispatcher.logger.exception('An uncaught error was raised while handling the error')
+
+            # Errors should not stop the thread.
+            except Exception:
+                self.dispatcher.logger.exception('An uncaught error was raised while processing the update')
 
 PINKY = Octeon_PTB(UPDATER)
 
@@ -209,59 +285,58 @@ def command_handle(bot: Bot, update: Update):
     Handles commands
     """
     _ = lambda x: octeon.locale.get_localized(x, update.message.chat.id)
-    if not PINKY.check_banned(update.message.chat_id):
-        if update.message.reply_to_message and update.message.reply_to_message.photo:
-            update.message.reply_to_message.text = update.message.reply_to_message.caption
-        commanddata = update.message.text.split()[0].split('@')
-        if (len(commanddata) >= 2 and commanddata[1] == bot.username) or (len(commanddata) == 1):
-            pinkyresp = PINKY.handle_command(update)
-            if pinkyresp:
-                bot.send_chat_action(update.message.chat.id, "typing")
-                user = update.message.from_user
-                args = update.message.text.split(" ")[1:]
-                if update.message.reply_to_message is None:
-                    message = update.message
-                else:
-                    message = update.message.reply_to_message
-                try:
-                    reply = pinkyresp(
-                        bot, update, user, args)
-                except Exception as e:
-                    bot.sendMessage(settings.ADMIN,
-                                    "Error occured in update:" +
-                                    "\n<code>%s</code>\n" % html.escape(str(update)) +
-                                    "Traceback:" +
-                                    "\n<code>%s</code>" % html.escape(
-                                        traceback.format_exc()),
-                                    parse_mode='HTML')
-                    reply = octeon.message(
-                        _(PINKY.locales["error_occured"]), failed=True)
-                if reply is None:
-                    return
-                elif not isinstance(reply, octeon.message):
-                    # Backwards compability
-                    reply = octeon.message.from_old_format(reply)
-                if reply.photo:
-                    msg = message.reply_photo(reply.photo)
-                    if reply.text:
-                        msg = message.reply_text(reply.text,
-                                                 parse_mode=reply.parse_mode,
-                                                 reply_markup=reply.inline_keyboard)
-                elif reply.file:
-                    msg = message.reply_document(document=reply.file,
-                                                 caption=reply.text,
-                                                 reply_markup=reply.inline_keyboard)
-                else:
+    if update.message.reply_to_message and update.message.reply_to_message.photo:
+        update.message.reply_to_message.text = update.message.reply_to_message.caption
+    commanddata = update.message.text.split()[0].split('@')
+    if (len(commanddata) >= 2 and commanddata[1] == bot.username) or (len(commanddata) == 1):
+        pinkyresp = PINKY.handle_command(update)
+        if pinkyresp:
+            bot.send_chat_action(update.message.chat.id, "typing")
+            user = update.message.from_user
+            args = update.message.text.split(" ")[1:]
+            if update.message.reply_to_message is None:
+                message = update.message
+            else:
+                message = update.message.reply_to_message
+            try:
+                reply = pinkyresp(
+                    bot, update, user, args)
+            except Exception as e:
+                bot.sendMessage(settings.ADMIN,
+                                "Error occured in update:" +
+                                "\n<code>%s</code>\n" % html.escape(str(update)) +
+                                "Traceback:" +
+                                "\n<code>%s</code>" % html.escape(
+                                    traceback.format_exc()),
+                                parse_mode='HTML')
+                reply = octeon.message(
+                    _(PINKY.locales["error_occured"]), failed=True)
+            if reply is None:
+                return
+            elif not isinstance(reply, octeon.message):
+                # Backwards compability
+                reply = octeon.message.from_old_format(reply)
+            if reply.photo:
+                msg = message.reply_photo(reply.photo)
+                if reply.text:
                     msg = message.reply_text(reply.text,
                                              parse_mode=reply.parse_mode,
                                              reply_markup=reply.inline_keyboard)
-                if reply.failed:
-                    msdict = msg.to_dict()
-                    msdict["chat_id"] = msg.chat_id
-                    msdict["user_id"] = update.message.from_user.id
-                    kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton(_(PINKY.locales["message_delete"]),
-                                                                           callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
-                    msg.edit_reply_markup(reply_markup=kbrmrkup)
+            elif reply.file:
+                msg = message.reply_document(document=reply.file,
+                                             caption=reply.text,
+                                             reply_markup=reply.inline_keyboard)
+            else:
+                msg = message.reply_text(reply.text,
+                                         parse_mode=reply.parse_mode,
+                                         reply_markup=reply.inline_keyboard)
+            if reply.failed:
+                msdict = msg.to_dict()
+                msdict["chat_id"] = msg.chat_id
+                msdict["user_id"] = update.message.from_user.id
+                kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton(_(PINKY.locales["message_delete"]),
+                                                                       callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
+                msg.edit_reply_markup(reply_markup=kbrmrkup)
 
 
 @run_async
@@ -349,41 +424,40 @@ def inlinebutton(bot, update):
 
 @run_async
 def onmessage_handle(bot, update):
-    if not PINKY.check_banned(update.message.chat_id):
-        if update.message:
-            if update.message.new_chat_members:
-                me = bot.getMe()
-                for user in update.message.new_chat_members:
-                    if user == me:
-                        pinkyresp = [lambda bot, update:PINKY.coreplug_start(
-                            bot, update, None, [])]
-            else:
-                pinkyresp = PINKY.handle_message(update)
-            for handle in pinkyresp:
-                reply = handle(bot, update)
-                message = update.message
-                if reply is None:
-                    continue
-                elif reply.photo:
-                    msg = message.reply_photo(reply.photo,
-                                              caption=reply.text,
-                                              reply_markup=reply.inline_keyboard)
-                elif reply.file:
-                    msg = message.reply_document(document=reply.file,
-                                                 caption=reply.text,
-                                                 reply_markup=reply.inline_keyboard)
-                else:
-                    msg = message.reply_text(reply.text,
-                                             parse_mode=reply.parse_mode,
+    if update.message:
+        if update.message.new_chat_members:
+            me = bot.getMe()
+            for user in update.message.new_chat_members:
+                if user == me:
+                    pinkyresp = [lambda bot, update:PINKY.coreplug_start(
+                        bot, update, None, [])]
+        else:
+            pinkyresp = PINKY.handle_message(update)
+        for handle in pinkyresp:
+            reply = handle(bot, update)
+            message = update.message
+            if reply is None:
+                continue
+            elif reply.photo:
+                msg = message.reply_photo(reply.photo,
+                                          caption=reply.text,
+                                          reply_markup=reply.inline_keyboard)
+            elif reply.file:
+                msg = message.reply_document(document=reply.file,
+                                             caption=reply.text,
                                              reply_markup=reply.inline_keyboard)
-                if reply.failed:
-                    msdict = msg.to_dict()
-                    msdict["chat_id"] = msg.chat_id
-                    msdict["user_id"] = update.message.from_user.id
-                    kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton(octeon.locale.get_localized(octeon.locale.locale_string("message_delete", "core"),
-                                                                                                       update.message.chat.id),
-                                                                           callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
-                    msg.edit_reply_markup(reply_markup=kbrmrkup)
+            else:
+                msg = message.reply_text(reply.text,
+                                         parse_mode=reply.parse_mode,
+                                         reply_markup=reply.inline_keyboard)
+            if reply.failed:
+                msdict = msg.to_dict()
+                msdict["chat_id"] = msg.chat_id
+                msdict["user_id"] = update.message.from_user.id
+                kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton(octeon.locale.get_localized(octeon.locale.locale_string("message_delete", "core"),
+                                                                                                   update.message.chat.id),
+                                                                       callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
+                msg.edit_reply_markup(reply_markup=kbrmrkup)
 
 
 def error_handle(bot, update, error):

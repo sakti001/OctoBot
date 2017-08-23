@@ -1,6 +1,16 @@
+
 """
 Settings file for Octeon-rewrite
 """
+# Uncomment this in copied settings so you wont experience crashes when Updating bot
+# from settings_example import *
+# Logging level
+# 10 - Debug
+# 20 - Info
+# 30 - Warning
+# 40 - Error
+# The lower, the more output
+LOG_LEVEL = 20
 # Your user ID
 ADMIN = 174781687
 # Bot token from botfather
@@ -39,3 +49,12 @@ NEWS_LINK = ""
 ABOUT_TEXT = """
 Powered by Python-Telegram-Bot, Admin:@username
 """
+# Command usage cooldown. (In seconds)
+USAGE_COOLDOWN = 10
+# Usages before warning
+WARNING_USAGE_COUNT = 5
+# Usages before starting to ignore for 10 minutes
+IGNORE_USAGE_COUNT = 8
+# Command usage ban time. (In minutes)
+USAGE_BAN = 10
+

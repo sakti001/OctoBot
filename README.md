@@ -6,7 +6,7 @@
 
 ### Installation
 
-1. `cp settings.example.py settings.py`
+1. `cp settings_example.py settings.py`
 
 2. Write your settings in file `settings.py`:
 
