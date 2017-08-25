@@ -118,33 +118,7 @@ class Octeon_PTB(octeon.OcteonCore):
                     else:
                         reply = octeon.message(
                             _(self.locales["not_enough_arguments"]) % command, parse_mode="HTML")
-                    message = update.message
-                    if reply is None:
-                        return
-                    elif not isinstance(reply, octeon.message):
-                        # Backwards compability
-                        reply = octeon.message.from_old_format(reply)
-                    if reply.photo:
-                        msg = message.reply_photo(reply.photo)
-                        if reply.text:
-                            msg = message.reply_text(reply.text,
-                                                     parse_mode=reply.parse_mode,
-                                                     reply_markup=reply.inline_keyboard)
-                    elif reply.file:
-                        msg = message.reply_document(document=reply.file,
-                                                     caption=reply.text,
-                                                     reply_markup=reply.inline_keyboard)
-                    else:
-                        msg = message.reply_text(reply.text,
-                                                 parse_mode=reply.parse_mode,
-                                                 reply_markup=reply.inline_keyboard)
-                    if reply.failed:
-                        msdict = msg.to_dict()
-                        msdict["chat_id"] = msg.chat_id
-                        msdict["user_id"] = update.message.from_user.id
-                        kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton(_(self.locales["message_delete"]),
-                                                                               callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
-                        msg.edit_reply_markup(reply_markup=kbrmrkup)
+                    send_message(bot, update, reply)
 
         if not command.endswith("/"):
             self.dispatcher.add_handler(CommandHandler(
@@ -311,32 +285,7 @@ def command_handle(bot: Bot, update: Update):
                                 parse_mode='HTML')
                 reply = octeon.message(
                     _(PINKY.locales["error_occured"]), failed=True)
-            if reply is None:
-                return
-            elif not isinstance(reply, octeon.message):
-                # Backwards compability
-                reply = octeon.message.from_old_format(reply)
-            if reply.photo:
-                msg = message.reply_photo(reply.photo)
-                if reply.text:
-                    msg = message.reply_text(reply.text,
-                                             parse_mode=reply.parse_mode,
-                                             reply_markup=reply.inline_keyboard)
-            elif reply.file:
-                msg = message.reply_document(document=reply.file,
-                                             caption=reply.text,
-                                             reply_markup=reply.inline_keyboard)
-            else:
-                msg = message.reply_text(reply.text,
-                                         parse_mode=reply.parse_mode,
-                                         reply_markup=reply.inline_keyboard)
-            if reply.failed:
-                msdict = msg.to_dict()
-                msdict["chat_id"] = msg.chat_id
-                msdict["user_id"] = update.message.from_user.id
-                kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton(_(PINKY.locales["message_delete"]),
-                                                                       callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
-                msg.edit_reply_markup(reply_markup=kbrmrkup)
+            send_message(bot, update, reply)
 
 
 @run_async
@@ -352,22 +301,13 @@ def inline_handle(bot: Bot, update: Update):
             return
         if not isinstance(reply, octeon.message):
             reply = octeon.message.from_old_format(reply)
-        if reply.parse_mode == "HTML":
+        if reply.parse_mode:
             result.append(InlineQueryResultArticle(
                 id=uuid4(),
                 title=pinkyresp[1],
                 description=re.sub(cleanr, "", reply.text.split("\n")[0]),
                 input_message_content=InputTextMessageContent(
-                    reply.text, parse_mode="HTML"),
-                reply_markup=reply.inline_keyboard
-            ))
-        elif reply.parse_mode == "MARKDOWN":
-            result.append(InlineQueryResultArticle(
-                id=uuid4(),
-                title=pinkyresp[1],
-                description=reply.text.split("\n")[0],
-                input_message_content=InputTextMessageContent(
-                    reply.text, parse_mode="MARKDOWN"),
+                    reply.text, parse_mode=reply.parse_mode),
                 reply_markup=reply.inline_keyboard
             ))
         elif reply.photo:
@@ -435,29 +375,7 @@ def onmessage_handle(bot, update):
             pinkyresp = PINKY.handle_message(update)
         for handle in pinkyresp:
             reply = handle(bot, update)
-            message = update.message
-            if reply is None:
-                continue
-            elif reply.photo:
-                msg = message.reply_photo(reply.photo,
-                                          caption=reply.text,
-                                          reply_markup=reply.inline_keyboard)
-            elif reply.file:
-                msg = message.reply_document(document=reply.file,
-                                             caption=reply.text,
-                                             reply_markup=reply.inline_keyboard)
-            else:
-                msg = message.reply_text(reply.text,
-                                         parse_mode=reply.parse_mode,
-                                         reply_markup=reply.inline_keyboard)
-            if reply.failed:
-                msdict = msg.to_dict()
-                msdict["chat_id"] = msg.chat_id
-                msdict["user_id"] = update.message.from_user.id
-                kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton(octeon.locale.get_localized(octeon.locale.locale_string("message_delete", "core"),
-                                                                                                   update.message.chat.id),
-                                                                       callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
-                msg.edit_reply_markup(reply_markup=kbrmrkup)
+            send_message(bot, update, reply)
 
 
 def error_handle(bot, update, error):
@@ -469,6 +387,40 @@ def error_handle(bot, update, error):
     else:
         bot.sendMessage(chat_id=settings.ADMIN,
                         text='Update "{}" caused error "{}"'.format(update, error))
+
+
+def send_message(bot, update, reply):
+    _ = lambda x: octeon.locale.get_localized(x, update.message.chat.id)
+    if update.message.reply_to_message:
+        message = update.message.reply_to_message
+    else:
+        message = update.message
+    if reply is None:
+        return
+    elif not isinstance(reply, octeon.message):
+        # Backwards compability
+        reply = octeon.message.from_old_format(reply)
+    if reply.photo:
+        msg = message.reply_photo(reply.photo)
+        if reply.text:
+            msg = message.reply_text(reply.text,
+                                     parse_mode=reply.parse_mode,
+                                     reply_markup=reply.inline_keyboard)
+    elif reply.file:
+        msg = message.reply_document(document=reply.file,
+                                     caption=reply.text,
+                                     reply_markup=reply.inline_keyboard)
+    else:
+        msg = message.reply_text(reply.text,
+                                 parse_mode=reply.parse_mode,
+                                 reply_markup=reply.inline_keyboard)
+    if reply.failed:
+        msdict = msg.to_dict()
+        msdict["chat_id"] = msg.chat_id
+        msdict["user_id"] = update.message.from_user.id
+        kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton(_(PINKY.locales["message_delete"]),
+                                                               callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
+        msg.edit_reply_markup(reply_markup=kbrmrkup)
 
 
 if __name__ == '__main__':
