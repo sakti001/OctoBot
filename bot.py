@@ -59,10 +59,9 @@ class Octeon_PTB(octeon.OcteonCore):
         self.locales = {}
         self.chat_last_handler = {}
         self.ban_data = {}
-        with open(os.path.normpath("locale/core/en.json")) as f:
-            for localeinf in json.load(f):
-                self.locales[localeinf] = octeon.locale.locale_string(
-                    localeinf, self.locale_box)
+        for localeinf in octeon.locale.get_strings(self.locale_box):
+            self.locales[localeinf] = octeon.locale.locale_string(
+                localeinf, self.locale_box)
         self.updater = updater
         self.dispatcher = updater.dispatcher
         self.dispatcher.process_update = self.process_update
