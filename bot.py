@@ -69,6 +69,8 @@ class Octeon_PTB(octeon.OcteonCore):
         self.platform = "Telegram"
 
     def gen_help(self, uid):
+        _ = lambda x: octeon.locale.get_localized(
+                x, uid)
         docs = ""
         for plugin in self.plugins:
             for command in plugin["commands"]:
@@ -76,10 +78,15 @@ class Octeon_PTB(octeon.OcteonCore):
                     if "hidden" in command:
                         if command["hidden"]:
                             continue
-                    docs += "%s - <i>%s</i>\n" % (command["command"],
-                                                  command["description"])
+                    if command["description"].startswith("locale://"):
+                        t = command["description"].lstrip("locale://").split("/")
+                        docs += "%s - <i>%s</i>\n" % (command["command"],
+                                                      _(octeon.locale.locale_string(t[1],t[0])))
+                    else:
+                        docs += "%s - <i>%s</i>\n" % (command["command"],
+                                                      command["description"])
         docs += "\n" + \
-            octeon.locale.get_localized(self.locales["help_find_more"], uid)
+            _(self.locales["help_find_more"])
         return docs
 
     def create_command_handler(self, command, function, minimal_args=0):
