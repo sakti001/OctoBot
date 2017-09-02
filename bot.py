@@ -392,13 +392,12 @@ def onmessage_handle(bot, update):
 
 def error_handle(bot, update, error):
     """Handles bad things"""
-    if update is None:
-        # Kill main process
-        LOGGER.error("Very weird shit happend, killing myself...")
-        os.system('kill %d' % MAIN_PID)
-    else:
-        bot.sendMessage(chat_id=settings.ADMIN,
-                        text='Update "{}" caused error "{}"'.format(update, error))
+    # if update is None:
+    #     # Kill main process
+    #     LOGGER.error("Very weird shit happend, killing myself...")
+    #     os.system('kill %d' % MAIN_PID)
+    bot.sendMessage(chat_id=settings.ADMIN,
+                    text='Update "{}" caused error "{}"'.format(update, error))
 
 
 def send_message(bot, update, reply):
