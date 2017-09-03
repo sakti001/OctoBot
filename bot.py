@@ -197,9 +197,9 @@ class Octeon_PTB(octeon.OcteonCore):
         if update.message:
             if update.message.caption:
                 update.message.text = update.message.caption
-        if update.message.reply_to_message:
-            if update.message.reply_to_message.caption:
-                update.message.reply_to_message.text = update.message.reply_to_message.caption
+            if update.message.reply_to_message:
+                if update.message.reply_to_message.caption:
+                    update.message.reply_to_message.text = update.message.reply_to_message.caption
         for group in self.dispatcher.groups:
             try:
                 for handler in (x for x in self.dispatcher.handlers[group] if x.check_update(update)):
