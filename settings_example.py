@@ -1,6 +1,6 @@
 
 """
-Settings file for Octeon-rewrite
+Settings file for OctoBot-rewrite
 """
 # Uncomment this in copied settings so you wont experience crashes when Updating bot
 # from settings_example import *
@@ -15,7 +15,7 @@ LOG_LEVEL = 20
 ADMIN = 174781687
 # Bot token from botfather
 TOKEN = "PUTYOURTOKENHERE"
-# Octeon needs this channel to make inline images work
+# OctoBot needs this channel to make inline images work
 # Put channel ID here
 CHANNEL = 0
 # This is required for "Reddit" plugin

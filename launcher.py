@@ -1,8 +1,8 @@
 import subprocess
 import time
 import logging
-LOGGER = logging.getLogger("Octeon-PTB-Launcher")
-LOGGER.info("Starting Octeon")
+LOGGER = logging.getLogger("OctoBot-PTB-Launcher")
+LOGGER.info("Starting OctoBot")
 subprocess.call(["python3", "bot.py"])
 try:
     while 1:

@@ -1,5 +1,5 @@
 """
-Octeon rewrite
+OctoBot rewrite
 """
 import logging
 import os
@@ -22,7 +22,7 @@ from telegram.ext import (CallbackQueryHandler, CommandHandler, Filters,
                           InlineQueryHandler, MessageHandler, Updater, Dispatcher,
                           dispatcher)
 # import constants
-import octeon
+import core
 import settings
 from telegram.ext.dispatcher import run_async
 import time
@@ -34,7 +34,7 @@ cleanr = re.compile('<.*?>')
 logging.basicConfig(level=settings.LOG_LEVEL)
 TRACKER = {}
 BANNEDUSERS = []
-LOGGER = logging.getLogger("Octeon-Brain")
+LOGGER = logging.getLogger("OctoBot-Brain")
 UPDATER = Updater(settings.TOKEN)
 DISPATCHER = UPDATER.dispatcher
 COMMAND_INFO = """
@@ -45,7 +45,7 @@ Additional info and examples:
 """
 
 
-class Octeon_PTB(octeon.OcteonCore):
+class OctoBot_PTB(core.OctoBotCore):
 
     def __init__(self, updater):
         if os.path.exists(os.path.normpath("plugdata/banned.json")):
@@ -59,17 +59,17 @@ class Octeon_PTB(octeon.OcteonCore):
         self.locales = {}
         self.chat_last_handler = {}
         self.ban_data = {}
-        for localeinf in octeon.locale.get_strings(self.locale_box):
-            self.locales[localeinf] = octeon.locale.locale_string(
+        for localeinf in core.locale.get_strings(self.locale_box):
+            self.locales[localeinf] = core.locale.locale_string(
                 localeinf, self.locale_box)
         self.updater = updater
         self.dispatcher = updater.dispatcher
         self.dispatcher.process_update = self.process_update
-        octeon.OcteonCore.__init__(self)
+        core.OctoBotCore.__init__(self)
         self.platform = "Telegram"
 
     def gen_help(self, uid):
-        _ = lambda x: octeon.locale.get_localized(
+        _ = lambda x: core.locale.get_localized(
                 x, uid)
         docs = ""
         for plugin in self.plugins:
@@ -81,7 +81,7 @@ class Octeon_PTB(octeon.OcteonCore):
                     if command["description"].startswith("locale://"):
                         t = command["description"].lstrip("locale://").split("/")
                         docs += "%s - <i>%s</i>\n" % (command["command"],
-                                                      _(octeon.locale.locale_string(t[1],t[0])))
+                                                      _(core.locale.locale_string(t[1],t[0])))
                     else:
                         docs += "%s - <i>%s</i>\n" % (command["command"],
                                                       command["description"])
@@ -91,7 +91,7 @@ class Octeon_PTB(octeon.OcteonCore):
 
     def create_command_handler(self, command, function, minimal_args=0):
         def handler(bot, update, args):
-            _ = lambda x: octeon.locale.get_localized(
+            _ = lambda x: core.locale.get_localized(
                 x, update.message.chat.id)
             if update.message.chat.id in self.disabled:
                 return
@@ -119,10 +119,10 @@ class Octeon_PTB(octeon.OcteonCore):
                                             "\n<code>%s</code>" % html.escape(
                                                 traceback.format_exc()),
                                             parse_mode='HTML')
-                            reply = octeon.message(
+                            reply = core.message(
                                 _(self.locales["error_occured"]), failed=True)
                     else:
-                        reply = octeon.message(
+                        reply = core.message(
                             _(self.locales["not_enough_arguments"]) % command, parse_mode="HTML")
                     send_message(bot, update, reply)
 
@@ -131,10 +131,10 @@ class Octeon_PTB(octeon.OcteonCore):
                 command=command[1:], callback=handler, pass_args=True), group=1)
 
     def coreplug_start(self, bot, update, user, args):
-        _ = lambda x: octeon.locale.get_localized(x, update.message.chat.id)
+        _ = lambda x: core.locale.get_localized(x, update.message.chat.id)
         if len(args) > 0:
             if args[0] == "help" and update.message.chat.type == "private":
-                return octeon.message(self.gen_help(update.message.chat.id), parse_mode="HTML")
+                return core.message(self.gen_help(update.message.chat.id), parse_mode="HTML")
         kbd = InlineKeyboardMarkup(
             [
                 [InlineKeyboardButton(
@@ -145,10 +145,10 @@ class Octeon_PTB(octeon.OcteonCore):
                     text=_(self.locales["chat_button"]), url=settings.CHAT_LINK)],
             ]
         )
-        return octeon.message(_(self.locales["start"]) % bot.getMe().first_name, inline_keyboard=kbd)
+        return core.message(_(self.locales["start"]) % bot.getMe().first_name, inline_keyboard=kbd)
 
     def coreplug_help(self, bot, update, user, args):
-        _ = lambda x: octeon.locale.get_localized(x, update.message.chat.id)
+        _ = lambda x: core.locale.get_localized(x, update.message.chat.id)
         if args:
             for plugin in self.plugins:
                 for command in plugin["commands"]:
@@ -159,15 +159,15 @@ class Octeon_PTB(octeon.OcteonCore):
                         if command["function"].__doc__:
                             info["docs"] = html.escape(
                                 textwrap.dedent(command["function"].__doc__))
-                        return octeon.message(_(self.locales["help_format"]) % info, parse_mode="HTML")
-            return octeon.locale.get_localized(self.locales["unknown_help_command"], update.message.chat.id)
+                        return core.message(_(self.locales["help_format"]) % info, parse_mode="HTML")
+            return core.locale.get_localized(self.locales["unknown_help_command"], update.message.chat.id)
         else:
             if update.message.chat.type == "private":
-                return octeon.message(self.gen_help(update.message.chat.id), parse_mode="HTML")
+                return core.message(self.gen_help(update.message.chat.id), parse_mode="HTML")
             else:
                 keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(
                     text=_(self.locales["help_button_into_pm"]), url="http://t.me/%s?start=help" % bot.getMe().username)]])
-                return octeon.message(_(self.locales["help_button_into_pm_text"]), inline_keyboard=keyboard)
+                return core.message(_(self.locales["help_button_into_pm_text"]), inline_keyboard=keyboard)
 
     def check_banned(self, chat_id):
         if str(chat_id) in self.banned:
@@ -179,7 +179,7 @@ class Octeon_PTB(octeon.OcteonCore):
         ban = self.check_banned(update.message.chat_id)
         if ban:
             self.updater.bot.sendMessage(
-                update.message.chat.id, octeon.locale.get_localized(self.locales["chat_banned"]) % ban)
+                update.message.chat.id, core.locale.get_localized(self.locales["chat_banned"]) % ban)
             self.updater.bot.leaveChat(update.message.chat.id)
 
     def process_update(self, update):
@@ -220,13 +220,13 @@ class Octeon_PTB(octeon.OcteonCore):
                                 if t["times_overused"] >= settings.IGNORE_USAGE_COUNT:
                                     LOGGER.warning("Banning chat %s[%s] cause of overusing command", update.message.chat.title, update.message.chat.id)
                                     self.updater.bot.sendMessage(update.message.chat.id,
-                                                                 octeon.locale.get_localized(self.locales["chat_ignored"], 
+                                                                 core.locale.get_localized(self.locales["chat_ignored"], 
                                                                  update.message.chat.id) % settings.USAGE_BAN)
                                     self.ban_data[update.message.chat.id] = time.time() + settings.USAGE_BAN*60
                                     break
                                 if t["times_overused"] >= settings.WARNING_USAGE_COUNT:
                                     self.updater.bot.sendMessage(update.message.chat.id,
-                                                                 octeon.locale.get_localized(self.locales["stop_spamming"], update.message.chat.id))
+                                                                 core.locale.get_localized(self.locales["stop_spamming"], update.message.chat.id))
                                     break
                         self.coreplug_check_banned(self.dispatcher.bot, update)
                     handler.handle_update(update, self.dispatcher)
@@ -262,7 +262,7 @@ class Octeon_PTB(octeon.OcteonCore):
             except Exception:
                 self.dispatcher.logger.exception('An uncaught error was raised while processing the update')
 
-PINKY = Octeon_PTB(UPDATER)
+PINKY = OctoBot_PTB(UPDATER)
 
 
 @run_async
@@ -270,7 +270,7 @@ def command_handle(bot: Bot, update: Update):
     """
     Handles commands
     """
-    _ = lambda x: octeon.locale.get_localized(x, update.message.chat.id)
+    _ = lambda x: core.locale.get_localized(x, update.message.chat.id)
     if update.message.reply_to_message and update.message.reply_to_message.photo:
         update.message.reply_to_message.text = update.message.reply_to_message.caption
     commanddata = update.message.text.split()[0].split('@')
@@ -295,7 +295,7 @@ def command_handle(bot: Bot, update: Update):
                                 "\n<code>%s</code>" % html.escape(
                                     traceback.format_exc()),
                                 parse_mode='HTML')
-                reply = octeon.message(
+                reply = core.message(
                     _(PINKY.locales["error_occured"]), failed=True)
             send_message(bot, update, reply)
 
@@ -311,8 +311,8 @@ def inline_handle(bot: Bot, update: Update):
         reply = pinkyresp[0](bot, update, user, args)
         if reply is None:
             return
-        if not isinstance(reply, octeon.message):
-            reply = octeon.message.from_old_format(reply)
+        if not isinstance(reply, core.message):
+            reply = core.message.from_old_format(reply)
         if reply.parse_mode:
             result.append(InlineQueryResultArticle(
                 id=uuid4(),
@@ -356,7 +356,7 @@ def inline_handle(bot: Bot, update: Update):
 @run_async
 def inlinebutton(bot, update):
     query = update.callback_query
-    _ = lambda x: octeon.locale.get_localized(PINKY.locales[x], query.from_user.id)
+    _ = lambda x: core.locale.get_localized(PINKY.locales[x], query.from_user.id)
     if query.data.startswith("del"):
         data = query.data.split(":")[1:]
         goodpeople = [int(data[2]), settings.ADMIN]
@@ -401,16 +401,16 @@ def error_handle(bot, update, error):
 
 
 def send_message(bot, update, reply):
-    _ = lambda x: octeon.locale.get_localized(x, update.message.chat.id)
+    _ = lambda x: core.locale.get_localized(x, update.message.chat.id)
     if update.message.reply_to_message:
         message = update.message.reply_to_message
     else:
         message = update.message
     if reply is None:
         return
-    elif not isinstance(reply, octeon.message):
+    elif not isinstance(reply, core.message):
         # Backwards compability
-        reply = octeon.message.from_old_format(reply)
+        reply = core.message.from_old_format(reply)
     if reply.photo:
         msg = message.reply_photo(reply.photo)
         if reply.text:
@@ -466,7 +466,7 @@ if __name__ == '__main__':
         if plugin["state"] != "OK":
             badplugins += 1
     UPDATER.bot.sendMessage(settings.ADMIN,
-                            "Octeon started up.\n" +
+                            "OctoBot started up.\n" +
                             str(len(PINKY.plugins)) + " plugins total\n" +
                             str(badplugins) + " plugins were not loaded\n" +
                             str(len(PINKY.plugins) - badplugins) +
