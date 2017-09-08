@@ -3,7 +3,7 @@
 	url = https://github.com/OctoNezd/Octeon-Plugins.git
 	branch = master
 [submodule "octeon"]
-	path = octeon
+	path = core
 	url = https://github.com/OctoNezd/Octeon-Core.git
 	branch = master
 [submodule "locale"]
