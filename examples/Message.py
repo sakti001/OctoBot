@@ -1,11 +1,11 @@
 """
 Echo plugin example
 """
-import octeon
+import core
 PLUGINVERSION = 2
 # Always name this variable as `plugin`
 # If you dont, module loader will fail to load the plugin!
-plugin = octeon.Plugin()
+plugin = core.Plugin()
 @plugin.message(regex=".*") # You pass regex pattern
 def echo(bot, update):
-    return octeon.message(text=update.message.text)
+    return core.message(text=update.message.text)

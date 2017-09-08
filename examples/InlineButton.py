@@ -1,9 +1,9 @@
-import octeon
+import core
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 PLUGINVERSION = 2
 # Always name this variable as `plugin`
 # If you dont, module loader will fail to load the plugin!
-plugin = octeon.Plugin()
+plugin = core.Plugin()
 @plugin.inline_button(callback_name="hello")
 def hello_inline(bot, update, query):
     query.answer("Hello, %s!" % query.from_user.first_name)
@@ -18,4 +18,4 @@ def inline_button_create(bot, update, user, args):
         InlineKeyboardButton("Test inline", callback_data="hello")
         ]
     ])
-    return octeon.message(text="Hi, @%s" % user.username, inline_keyboard=keyboard)
+    return core.message(text="Hi, @%s" % user.username, inline_keyboard=keyboard)
