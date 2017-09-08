@@ -1,12 +1,12 @@
 [submodule "plugins"]
 	path = plugins
-	url = https://github.com/OctoNezd/Octeon-Plugins.git
+	url = https://github.com/OctoNezd/OctoBotPlugins.git
 	branch = master
 [submodule "octeon"]
 	path = core
-	url = https://github.com/OctoNezd/Octeon-Core.git
+	url = https://github.com/OctoNezd/OctoBotCore.git
 	branch = master
 [submodule "locale"]
 	path = locale
-	url = https://github.com/OctoNezd/OcteonLocales.git
+	url = https://github.com/OctoNezd/OctoBotLocales.git
 	branch = master
