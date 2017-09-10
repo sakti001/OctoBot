@@ -1,5 +1,6 @@
 python-telegram-bot
-praw
+requests
+xmltodict
 pillow
-dataset
 emoji
+gtts

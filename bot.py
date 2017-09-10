@@ -421,6 +421,8 @@ def send_message(bot, update, reply):
         msg = message.reply_document(document=reply.file,
                                      caption=reply.text,
                                      reply_markup=reply.inline_keyboard)
+    elif reply.voice:
+        msg = message.reply_voice(voice=reply.voice, caption=reply.text, reply_markup=reply.inline_keyboard)
     else:
         msg = message.reply_text(reply.text,
                                  parse_mode=reply.parse_mode,
