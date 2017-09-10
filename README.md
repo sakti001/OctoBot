@@ -3,6 +3,8 @@
 
 ## A modular telegram bot
 
+[![Telegram Bot](https://img.shields.io/badge/Telegram-Bot-0088cc.svg)](http://t.me/aigis_bot) [![Telegram Chat](https://img.shields.io/badge/Telegram-Bot-0088cc.svg)](https://t.me/joinchat/Cmr090P9yzCXXC95NppB3A) [![Telegram Channel](https://img.shields.io/badge/Telegram-Channel-0088cc.svg)](http://t.me/aigis_bot_channel)
+
 ### Installation
 
 1. `cp settings_example.py settings.py`
