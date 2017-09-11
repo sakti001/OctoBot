@@ -19,7 +19,7 @@ from telegram import (Bot, InlineKeyboardButton, InlineKeyboardMarkup,
                       InlineQueryResultPhoto, InputTextMessageContent,
                       TelegramError, Update)
 from telegram.ext import (CallbackQueryHandler, CommandHandler, Filters,
-                          InlineQueryHandler, MessageHandler, Updater, Dispatcher,
+                          InlineQueryHandler, MessageHandler, Updater,
                           dispatcher)
 # import constants
 import core
@@ -37,7 +37,7 @@ logging.basicConfig(level=settings.LOG_LEVEL)
 TRACKER = {}
 BANNEDUSERS = []
 LOGGER = logging.getLogger("OctoBot-Brain")
-UPDATER = ptb_mods.Updater(settings.TOKEN)
+UPDATER = Updater(settings.TOKEN)
 DISPATCHER = UPDATER.dispatcher
 COMMAND_INFO = """
 %(command)s
