@@ -26,6 +26,8 @@ import core
 import settings
 from telegram.ext.dispatcher import run_async
 import time
+import ptb_mods
+
 
 global TRACKER
 start = time.time()
@@ -35,7 +37,7 @@ logging.basicConfig(level=settings.LOG_LEVEL)
 TRACKER = {}
 BANNEDUSERS = []
 LOGGER = logging.getLogger("OctoBot-Brain")
-UPDATER = Updater(settings.TOKEN)
+UPDATER = ptb_mods.Updater(settings.TOKEN)
 DISPATCHER = UPDATER.dispatcher
 COMMAND_INFO = """
 %(command)s

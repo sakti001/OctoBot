@@ -57,5 +57,5 @@ WARNING_USAGE_COUNT = 5
 IGNORE_USAGE_COUNT = 8
 # Command usage ban time. (In minutes)
 USAGE_BAN = 10
-# api.ai token
-API_AI_TOKEN = ""
+# api.ai token. Unused currently. Supposedly would be used in AI update
+# API_AI_TOKEN = ""
