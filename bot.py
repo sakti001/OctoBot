@@ -205,41 +205,43 @@ class OctoBot_PTB(core.OctoBotCore):
         for group in self.dispatcher.groups:
             try:
                 for handler in (x for x in self.dispatcher.handlers[group] if x.check_update(update)):
-                    if update.message:
-                        if update.message.chat.id in self.ban_data:
-                            if time.time() > self.ban_data[update.message.chat.id]:
-                                del self.ban_data[update.message.chat.id]
-                                del self.chat_last_handler[update.message.chat.id]
-                            else:
-                                break
-                        if update.message.chat.id in self.chat_last_handler:
-                            t = self.chat_last_handler[update.message.chat.id]
-                            if t["handler"] == handler:
-                                if (time.time() - t["used"]) < settings.USAGE_COOLDOWN:
-                                    t["times_overused"] += 1
-                                else:
-                                    t["times_overused"] = 1
-                                if t["times_overused"] >= settings.IGNORE_USAGE_COUNT:
-                                    LOGGER.warning("Banning chat %s[%s] cause of overusing command", update.message.chat.title, update.message.chat.id)
-                                    self.updater.bot.sendMessage(update.message.chat.id,
-                                                                 core.locale.get_localized(self.locales["chat_ignored"], 
-                                                                 update.message.chat.id) % settings.USAGE_BAN)
-                                    self.ban_data[update.message.chat.id] = time.time() + settings.USAGE_BAN*60
-                                    break
-                                if t["times_overused"] >= settings.WARNING_USAGE_COUNT:
-                                    self.updater.bot.sendMessage(update.message.chat.id,
-                                                                 core.locale.get_localized(self.locales["stop_spamming"], update.message.chat.id))
-                                    break
-                        self.coreplug_check_banned(self.dispatcher.bot, update)
-                    handler.handle_update(update, self.dispatcher)
-                    LOGGER.debug(handler)
-                    if not isinstance(handler, MessageHandler):
+                    if settings.USAGE_BAN_STATE:
                         if update.message:
+                            if update.message.chat.id in self.ban_data:
+                                if time.time() > self.ban_data[update.message.chat.id]:
+                                    del self.ban_data[update.message.chat.id]
+                                    del self.chat_last_handler[update.message.chat.id]
+                                else:
+                                    break
                             if update.message.chat.id in self.chat_last_handler:
-                                self.chat_last_handler[update.message.chat.id]["used"] = time.time()
-                            else:
-                                self.chat_last_handler[update.message.chat.id] = {"handler":handler, "used":time.time(), "times_overused":1}
-                            LOGGER.debug(self.chat_last_handler[update.message.chat.id])
+                                t = self.chat_last_handler[update.message.chat.id]
+                                if t["handler"] == handler:
+                                    if (time.time() - t["used"]) < settings.USAGE_COOLDOWN:
+                                        t["times_overused"] += 1
+                                    else:
+                                        t["times_overused"] = 1
+                                    if t["times_overused"] >= settings.IGNORE_USAGE_COUNT:
+                                        LOGGER.warning("Banning chat %s[%s] cause of overusing command", update.message.chat.title, update.message.chat.id)
+                                        self.updater.bot.sendMessage(update.message.chat.id,
+                                                                     core.locale.get_localized(self.locales["chat_ignored"], 
+                                                                     update.message.chat.id) % settings.USAGE_BAN)
+                                        self.ban_data[update.message.chat.id] = time.time() + settings.USAGE_BAN*60
+                                        break
+                                    if t["times_overused"] >= settings.WARNING_USAGE_COUNT:
+                                        self.updater.bot.sendMessage(update.message.chat.id,
+                                                                     core.locale.get_localized(self.locales["stop_spamming"], update.message.chat.id))
+                                        break
+                            self.coreplug_check_banned(self.dispatcher.bot, update)
+                    handler.handle_update(update, self.dispatcher)
+                    if settings.USAGE_BAN_STATE:
+                        LOGGER.debug(handler)
+                        if not isinstance(handler, MessageHandler):
+                            if update.message:
+                                if update.message.chat.id in self.chat_last_handler:
+                                    self.chat_last_handler[update.message.chat.id]["used"] = time.time()
+                                else:
+                                    self.chat_last_handler[update.message.chat.id] = {"handler":handler, "used":time.time(), "times_overused":1}
+                                LOGGER.debug(self.chat_last_handler[update.message.chat.id])
                     break
 
             # HACK: I cant find anywhere on importing this exception
