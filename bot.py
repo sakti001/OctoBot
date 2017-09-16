@@ -4,14 +4,10 @@ OctoBot rewrite
 import logging
 import os
 import re
-import sys
-import warnings
 import html
 import textwrap
 import traceback
 import json
-from html import escape
-from pprint import pformat
 from uuid import uuid4
 
 from telegram import (Bot, InlineKeyboardButton, InlineKeyboardMarkup,
@@ -19,14 +15,13 @@ from telegram import (Bot, InlineKeyboardButton, InlineKeyboardMarkup,
                       InlineQueryResultPhoto, InputTextMessageContent,
                       TelegramError, Update)
 from telegram.ext import (CallbackQueryHandler, CommandHandler, Filters,
-                          InlineQueryHandler, MessageHandler, Updater,
-                          dispatcher)
-# import constants
+                          InlineQueryHandler, MessageHandler, Updater)
+
+import obupdater
 import core
 import settings
 from telegram.ext.dispatcher import run_async
 import time
-import ptb_mods
 
 
 global TRACKER
@@ -39,6 +34,7 @@ BANNEDUSERS = []
 LOGGER = logging.getLogger("OctoBot-Brain")
 UPDATER = Updater(settings.TOKEN)
 DISPATCHER = UPDATER.dispatcher
+BOT = UPDATER.bot
 COMMAND_INFO = """
 %(command)s
 Description: <i>%(description)s</i>
@@ -269,42 +265,36 @@ class OctoBot_PTB(core.OctoBotCore):
 PINKY = OctoBot_PTB(UPDATER)
 
 
-@run_async
 def command_handle(bot: Bot, update: Update):
     """
     Handles commands
     """
     _ = lambda x: core.locale.get_localized(x, update.message.chat.id)
+    LOGGER.debug("Handling command")
     if update.message.reply_to_message and update.message.reply_to_message.photo:
         update.message.reply_to_message.text = update.message.reply_to_message.caption
-    commanddata = update.message.text.split()[0].split('@')
-    if (len(commanddata) >= 2 and commanddata[1] == bot.username) or (len(commanddata) == 1):
-        pinkyresp = PINKY.handle_command(update)
-        if pinkyresp:
-            bot.send_chat_action(update.message.chat.id, "typing")
-            user = update.message.from_user
-            args = update.message.text.split(" ")[1:]
-            if update.message.reply_to_message is None:
-                message = update.message
-            else:
-                message = update.message.reply_to_message
-            try:
-                reply = pinkyresp(
-                    bot, update, user, args)
-            except Exception as e:
-                bot.sendMessage(settings.ADMIN,
-                                "Error occured in update:" +
-                                "\n<code>%s</code>\n" % html.escape(str(update)) +
-                                "Traceback:" +
-                                "\n<code>%s</code>" % html.escape(
-                                    traceback.format_exc()),
-                                parse_mode='HTML')
-                reply = core.message(
-                    _(PINKY.locales["error_occured"]), failed=True)
-            send_message(bot, update, reply)
+    pinkyresp = PINKY.handle_command(update)
+    LOGGER.debug(pinkyresp)
+    if pinkyresp:
+        bot.send_chat_action(update.message.chat.id, "typing")
+        user = update.message.from_user
+        args = update.message.text.split(" ")[1:]
+        try:
+            reply = pinkyresp(
+                bot, update, user, args)
+        except Exception as e:
+            bot.sendMessage(settings.ADMIN,
+                            "Error occured in update:" +
+                            "\n<code>%s</code>\n" % html.escape(str(update)) +
+                            "Traceback:" +
+                            "\n<code>%s</code>" % html.escape(
+                                traceback.format_exc()),
+                            parse_mode='HTML')
+            reply = core.message(
+                _(PINKY.locales["error_occured"]), failed=True)
+        send_message(bot, update, reply)
 
 
-@run_async
 def inline_handle(bot: Bot, update: Update):
     query = update.inline_query.query
     args = query.split(" ")[1:]
@@ -357,7 +347,6 @@ def inline_handle(bot: Bot, update: Update):
                                cache_time=1)
 
 
-@run_async
 def inlinebutton(bot, update):
     query = update.callback_query
     _ = lambda x: core.locale.get_localized(PINKY.locales[x], query.from_user.id)
@@ -376,9 +365,10 @@ def inlinebutton(bot, update):
         presp = PINKY.handle_inline_button(query)
         if presp:
             presp(bot, update, query)
+        else:
+            update.callback_query.answer("I dont think this button is supposed to do anything ¯\_(ツ)_/¯")
 
 
-@run_async
 def onmessage_handle(bot, update):
     if update.message:
         if update.message.new_chat_members:
@@ -403,6 +393,8 @@ def error_handle(bot, update, error):
     bot.sendMessage(chat_id=settings.ADMIN,
                     text='Update "{}" caused error "{}"'.format(update, error))
 
+def test(bot, update):
+    command_handle(bot, update)
 
 def send_message(bot, update, reply):
     _ = lambda x: core.locale.get_localized(x, update.message.chat.id)
@@ -441,37 +433,46 @@ def send_message(bot, update, reply):
 
 
 if __name__ == '__main__':
-    LOGGER.info("Adding handlers...")
-    DISPATCHER.add_handler(MessageHandler(
-        Filters.all, onmessage_handle), group=0)
-    DISPATCHER.add_handler(MessageHandler(
-        Filters.command, command_handle), group=1)
-    DISPATCHER.add_handler(InlineQueryHandler(inline_handle))
-    DISPATCHER.add_handler(CallbackQueryHandler(inlinebutton))
-    # DISPATCHER.add_handler(MessageHandler(
-    #     Filters.status_update.new_chat_members, new_someone), group=0)
-    DISPATCHER.add_handler(MessageHandler(
-        Filters.all, PINKY.coreplug_check_banned), group=0)
-    DISPATCHER.add_error_handler(error_handle)
-    if settings.WEBHOOK_ON:
-        LOGGER.info("Webhook is ON")
-        UPDATER.start_webhook(listen='0.0.0.0',
-                              port=settings.WEBHOOK_PORT,
-                              url_path=settings.WEBHOOK_URL_PATH,
-                              key=settings.WEBHOOK_KEY,
-                              cert=settings.WEBHOOK_CERT,
-                              webhook_url=settings.WEBHOOK_URL,
-                              bootstrap_retries=-1)
+    if settings.USE_PTB_UPDATER:
+        LOGGER.info("Adding handlers...")
+        DISPATCHER.add_handler(MessageHandler(
+            Filters.all, onmessage_handle), group=0)
+        DISPATCHER.add_handler(MessageHandler(
+            Filters.command, command_handle), group=1)
+        DISPATCHER.add_handler(InlineQueryHandler(inline_handle))
+        DISPATCHER.add_handler(CallbackQueryHandler(inlinebutton))
+        # DISPATCHER.add_handler(MessageHandler(
+        #     Filters.status_update.new_chat_members, new_someone), group=0)
+        DISPATCHER.add_handler(MessageHandler(
+            Filters.all, PINKY.coreplug_check_banned), group=0)
+        DISPATCHER.add_error_handler(error_handle)
+        if settings.WEBHOOK_ON:
+            LOGGER.info("Webhook is ON")
+            UPDATER.start_webhook(listen='0.0.0.0',
+                                  port=settings.WEBHOOK_PORT,
+                                  url_path=settings.WEBHOOK_URL_PATH,
+                                  key=settings.WEBHOOK_KEY,
+                                  cert=settings.WEBHOOK_CERT,
+                                  webhook_url=settings.WEBHOOK_URL,
+                                  bootstrap_retries=-1)
+        else:
+            LOGGER.info("Webhook is OFF")
+            UPDATER.start_polling(clean=True,
+                                  bootstrap_retries=-1)
+            # UPDATER.idle()
+
     else:
-        LOGGER.info("Webhook is OFF")
-        UPDATER.start_polling(clean=True,
-                              bootstrap_retries=-1)
-        # UPDATER.idle()
+        OBUPDATER = obupdater.OBUpdater(BOT, PINKY)
+        OBUPDATER.command_handle = command_handle
+        OBUPDATER.inline_handle = inline_handle
+        OBUPDATER.inline_kbd_handle = inlinebutton
+        OBUPDATER.message_handle = onmessage_handle
+        OBUPDATER.start_poll()
     badplugins = 0
     for plugin in PINKY.plugins:
         if plugin["state"] != "OK":
             badplugins += 1
-    UPDATER.bot.sendMessage(settings.ADMIN,
+    BOT.sendMessage(settings.ADMIN,
                             "OctoBot started up.\n" +
                             str(len(PINKY.plugins)) + " plugins total\n" +
                             str(badplugins) + " plugins were not loaded\n" +
