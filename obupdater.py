@@ -7,6 +7,7 @@ import settings
 
 import threading
 import traceback
+import datetime
 
 
 class OBUpdater:
@@ -43,6 +44,7 @@ class OBUpdater:
                 else:
                     self.message_handle(self.bot, update)
             elif update.inline_query:
+                update.message = telegram.Message(0, update.inline_query.from_user, datetime.datetime.now(), update.inline_query.from_user)
                 self.inline_handle(self.bot, update)
             elif update.callback_query:
                 self.inline_kbd_handle(self.bot, update)
