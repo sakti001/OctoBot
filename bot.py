@@ -371,6 +371,7 @@ def inlinebutton(bot, update):
 
 def onmessage_handle(bot, update):
     if update.message:
+        pinkyresp = []
         if update.message.new_chat_members:
             me = bot.getMe()
             for user in update.message.new_chat_members:
