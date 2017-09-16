@@ -55,7 +55,7 @@ class OBUpdater:
             except Exception as e:
                 self.logger.error(e)
                 self.bot.sendMessage(
-                    settings.ADMIN, "Uncatched Exception:\n<code>%s</code>\nUpdate:\n<code>%s</code>" % html.escape(traceback.format_exc()), parse_mode="HTML")
+                    settings.ADMIN, "Uncatched Exception:\n<code>%s</code>\nUpdate:\n<code>%s</code>" % (html.escape(traceback.format_exc()), update), parse_mode="HTML")
 
     def _poll_worker(self):
         while True:
