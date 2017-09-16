@@ -73,7 +73,7 @@ class OBUpdater:
 
     def start_poll(self):
         try:
-            self.update_id = self.bot.get_updates()[0].update_id
+            self.update_id = self.bot.get_updates()[-1].update_id + 1
         except IndexError:
             self.update_id = None
         threading.Thread(target=self._poll_worker).start()
