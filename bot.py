@@ -26,6 +26,8 @@ import time
 
 global TRACKER
 start = time.time()
+RLOG = logging.getLogger()
+
 MAIN_PID = os.getpid()
 cleanr = re.compile('<.*?>')
 logging.basicConfig(level=settings.LOG_LEVEL)
@@ -43,7 +45,7 @@ Additional info and examples:
 """
 
 
-class OctoBot_PTB(core.OctoBotCore):
+class OctoBot_PTB(core.OctoBotCore, logging.NullHandler):
 
     def __init__(self, updater):
         if os.path.exists(os.path.normpath("plugdata/banned.json")):

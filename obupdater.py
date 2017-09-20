@@ -16,6 +16,7 @@ class OBUpdater:
         self.logger = logging.getLogger("OBUpdater")
         self.bot = bot
         self.modloader = modloader
+        self.bot.modloader = self.modloader
         self.update_id = None
 
     def command_handle(self, bot, update):

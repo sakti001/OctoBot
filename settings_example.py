@@ -59,9 +59,10 @@ IGNORE_USAGE_COUNT = 8
 USAGE_BAN = 10
 # Do usage ban?
 USAGE_BAN_STATE = False
-# api.ai token. Unused currently. Supposedly would be used in AI update
-# API_AI_TOKEN = ""
-
 # Use python-telegram-bot Updater instead of OctoBot custom Updater.
 # Enable it if you have issues
 USE_PTB_UPDATER = False
+# Words AI should react to
+AI_REACT = []
+# api.ai token. 
+API_AI_TOKEN = ""

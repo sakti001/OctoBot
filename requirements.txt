@@ -4,3 +4,4 @@ xmltodict
 pillow
 emoji
 gtts
+apiai
