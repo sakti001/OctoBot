@@ -434,7 +434,7 @@ def send_message(bot, update, reply):
                                                                callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
         msg.edit_reply_markup(reply_markup=kbrmrkup)
 
-
+PINKY.myusername = UPDATER.bot.getMe().username
 if __name__ == '__main__':
     if settings.USE_PTB_UPDATER:
         LOGGER.info("Adding handlers...")
