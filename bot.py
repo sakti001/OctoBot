@@ -406,6 +406,7 @@ def send_message(bot, update, reply):
         # Backwards compability
         reply = core.message.from_old_format(reply)
     _ = lambda x: core.locale.get_localized(x, update.message.chat.id)
+    LOGGER.debug("Reply to prev message: %s", reply.reply_to_prev_message)
     if update.message.reply_to_message and reply.reply_to_prev_message:
         message = update.message.reply_to_message
     else:
