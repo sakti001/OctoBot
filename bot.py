@@ -400,16 +400,16 @@ def test(bot, update):
     command_handle(bot, update)
 
 def send_message(bot, update, reply):
-    _ = lambda x: core.locale.get_localized(x, update.message.chat.id)
-    if update.message.reply_to_message:
-        message = update.message.reply_to_message
-    else:
-        message = update.message
     if reply is None:
         return
     elif not isinstance(reply, core.message):
         # Backwards compability
         reply = core.message.from_old_format(reply)
+    _ = lambda x: core.locale.get_localized(x, update.message.chat.id)
+    if update.message.reply_to_message and reply.reply_to_prev_message:
+        message = update.message.reply_to_message
+    else:
+        message = update.message
     if reply.photo:
         msg = message.reply_photo(reply.photo)
         if reply.text:
