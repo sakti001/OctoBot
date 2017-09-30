@@ -23,12 +23,6 @@ CHANNEL = 0
 REDDITID = ""
 REDDITSECRET = ""
 REDDITUA = ""
-# This is required for teletrack:
-# Put google analytics tracking code here
-TRACKCODE = ""
-# Backpack.TF API Key.
-# Required for tf_currency plugin
-BPTFTOKEN = ""
 # This is Webhook Settings
 # You should use webhook because it is
 # better than polling telegram
