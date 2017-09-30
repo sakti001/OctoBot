@@ -42,7 +42,7 @@ class OBUpdater:
                     update.message.text = update.message.caption
                 if update.message.reply_to_message:
                     if update.message.reply_to_message.caption:
-                        update.message.reply_to_message.caption = update.message.text
+                        update.message.reply_to_message.text = update.message.reply_to_message.caption
                 if update.message.text:
                     if update.message.text.startswith("/"):
                         threading.Thread(target=self.command_handle, args=(self.bot, update)).start()
