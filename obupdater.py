@@ -19,6 +19,9 @@ class OBUpdater:
         self.bot.modloader = self.modloader
         self.update_id = None
 
+    def update_handle(self, bot, update):
+        raise RuntimeError
+
     def command_handle(self, bot, update):
         raise RuntimeError
 
@@ -52,7 +55,9 @@ class OBUpdater:
                 threading.Thread(target=self.inline_handle, args=(self.bot, update)).start()
             elif update.callback_query:
                 threading.Thread(target=self.inline_kbd_handle, args=(self.bot, update)).start()
+            threading.Thread(target=self.update_handle, args=(self.bot, update)).start()
         except Exception as e:
+            # raise e
             self.logger.error(e)
             self.bot.sendMessage(
                 settings.ADMIN, "Uncatched Exception:\n<code>%s</code>\nUpdate:\n<code>%s</code>" % (html.escape(traceback.format_exc()), update), parse_mode="HTML")

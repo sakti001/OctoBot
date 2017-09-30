@@ -267,6 +267,7 @@ class OctoBot_PTB(core.OctoBotCore, logging.NullHandler):
 PINKY = OctoBot_PTB(UPDATER)
 
 
+
 def command_handle(bot: Bot, update: Update):
     """
     Handles commands
@@ -370,6 +371,11 @@ def inlinebutton(bot, update):
         else:
             update.callback_query.answer("I dont think this button is supposed to do anything ¯\_(ツ)_/¯")
 
+def update_handle(bot, update):
+    pinkyresp = PINKY.handle_update(update)
+    for handle in pinkyresp:
+        reply = handle(bot, update)
+        send_message(bot, update, reply)
 
 def onmessage_handle(bot, update):
     if update.message:
@@ -471,6 +477,7 @@ if __name__ == '__main__':
         OBUPDATER.inline_handle = inline_handle
         OBUPDATER.inline_kbd_handle = inlinebutton
         OBUPDATER.message_handle = onmessage_handle
+        OBUPDATER.update_handle = update_handle
         OBUPDATER.start_poll()
     badplugins = 0
     for plugin in PINKY.plugins:
