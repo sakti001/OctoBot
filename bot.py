@@ -14,13 +14,10 @@ from telegram import (Bot, InlineKeyboardButton, InlineKeyboardMarkup,
                       InlineQueryResultArticle, InlineQueryResultCachedPhoto,
                       InlineQueryResultPhoto, InputTextMessageContent,
                       TelegramError, Update)
-from telegram.ext import (CallbackQueryHandler, CommandHandler, Filters,
-                          InlineQueryHandler, MessageHandler, Updater)
 
 import obupdater
 import core
 import settings
-from telegram.ext.dispatcher import run_async
 import time
 
 
@@ -34,20 +31,20 @@ logging.basicConfig(level=settings.LOG_LEVEL)
 TRACKER = {}
 BANNEDUSERS = []
 LOGGER = logging.getLogger("OctoBot-Brain")
-UPDATER = Updater(settings.TOKEN)
-DISPATCHER = UPDATER.dispatcher
-BOT = UPDATER.bot
+BOT = Bot(settings.TOKEN)
 COMMAND_INFO = """
 %(command)s
 Description: <i>%(description)s</i>
 Additional info and examples:
 <i>%(docs)s</i>
 """
+if settings.USE_PTB_UPDATER:
+    LOGGER.critical("Python-Telegram-Bot updater support is DISCONTINUED. Will use OctoBot Updater.")
 
 
 class OctoBot_PTB(core.OctoBotCore, logging.NullHandler):
 
-    def __init__(self, updater):
+    def __init__(self, bot):
         if os.path.exists(os.path.normpath("plugdata/banned.json")):
             with open(os.path.normpath("plugdata/banned.json")) as f:
                 self.banned = json.load(f)
@@ -62,9 +59,7 @@ class OctoBot_PTB(core.OctoBotCore, logging.NullHandler):
         for localeinf in core.locale.get_strings(self.locale_box):
             self.locales[localeinf] = core.locale.locale_string(
                 localeinf, self.locale_box)
-        self.updater = updater
-        self.dispatcher = updater.dispatcher
-        self.dispatcher.process_update = self.process_update
+        self.bot = bot
         core.OctoBotCore.__init__(self)
         self.platform = "Telegram"
 
@@ -88,47 +83,6 @@ class OctoBot_PTB(core.OctoBotCore, logging.NullHandler):
         docs += "\n" + \
             _(self.locales["help_find_more"])
         return docs
-
-    def create_command_handler(self, command, function, minimal_args=0):
-        def handler(bot, update, args):
-            _ = lambda x: core.locale.get_localized(
-                x, update.message.chat.id)
-            if update.message.chat.id in self.disabled:
-                return
-            else:
-                state_only_command = update.message.text == command or update.message.text.startswith(
-                    command + " ")
-                state_word_swap = len(update.message.text.split(
-                    "/")) > 2 and update.message.text.startswith(command)
-                state_mention_command = update.message.text.startswith(
-                    command + "@")
-                if state_only_command or state_word_swap or state_mention_command:
-                    logging.getLogger("Chat-%s [%s]" % (update.message.chat.title, update.message.chat.id)).info("User %s [%s] requested %s.",
-                                                                                                                 update.message.from_user.username,
-                                                                                                                 update.message.from_user.id,
-                                                                                                                 update.message.text)
-                    if not len(args) < minimal_args:
-                        try:
-                            reply = function(
-                                bot, update, update.message.from_user, args)
-                        except Exception as e:
-                            bot.sendMessage(settings.ADMIN,
-                                            "Error occured in update:" +
-                                            "\n<code>%s</code>\n" % html.escape(str(update)) +
-                                            "Traceback:" +
-                                            "\n<code>%s</code>" % html.escape(
-                                                traceback.format_exc()),
-                                            parse_mode='HTML')
-                            reply = core.message(
-                                _(self.locales["error_occured"]), failed=True)
-                    else:
-                        reply = core.message(
-                            _(self.locales["not_enough_arguments"]) % command, parse_mode="HTML")
-                    send_message(bot, update, reply)
-
-        if not command.endswith("/"):
-            self.dispatcher.add_handler(CommandHandler(
-                command=command[1:], callback=handler, pass_args=True), group=1)
 
     def coreplug_start(self, bot, update, user, args):
         _ = lambda x: core.locale.get_localized(x, update.message.chat.id)
@@ -178,93 +132,11 @@ class OctoBot_PTB(core.OctoBotCore, logging.NullHandler):
     def coreplug_check_banned(self, bot, update):
         ban = self.check_banned(update.message.chat_id)
         if ban:
-            self.updater.bot.sendMessage(
+            self.bot.sendMessage(
                 update.message.chat.id, core.locale.get_localized(self.locales["chat_banned"]) % ban)
-            self.updater.bot.leaveChat(update.message.chat.id)
+            self.bot.leaveChat(update.message.chat.id)
 
-    def process_update(self, update):
-        """
-        Processes a single update.
-        Args:
-            update (:obj:`str` | :class:`telegram.Update` | :class:`telegram.TelegramError`):
-                The update to process.
-        """
-
-        # An error happened while polling
-        if isinstance(update, TelegramError):
-            self.dispatcher.dispatch_error(None, update)
-            return
-        if update.message:
-            if update.message.caption:
-                update.message.text = update.message.caption
-            if update.message.reply_to_message:
-                if update.message.reply_to_message.caption:
-                    update.message.reply_to_message.text = update.message.reply_to_message.caption
-        for group in self.dispatcher.groups:
-            try:
-                for handler in (x for x in self.dispatcher.handlers[group] if x.check_update(update)):
-                    if settings.USAGE_BAN_STATE:
-                        if update.message:
-                            if update.message.chat.id in self.ban_data:
-                                if time.time() > self.ban_data[update.message.chat.id]:
-                                    del self.ban_data[update.message.chat.id]
-                                    del self.chat_last_handler[update.message.chat.id]
-                                else:
-                                    break
-                            if update.message.chat.id in self.chat_last_handler:
-                                t = self.chat_last_handler[update.message.chat.id]
-                                if t["handler"] == handler:
-                                    if (time.time() - t["used"]) < settings.USAGE_COOLDOWN:
-                                        t["times_overused"] += 1
-                                    else:
-                                        t["times_overused"] = 1
-                                    if t["times_overused"] >= settings.IGNORE_USAGE_COUNT:
-                                        LOGGER.warning("Banning chat %s[%s] cause of overusing command", update.message.chat.title, update.message.chat.id)
-                                        self.updater.bot.sendMessage(update.message.chat.id,
-                                                                     core.locale.get_localized(self.locales["chat_ignored"], 
-                                                                     update.message.chat.id) % settings.USAGE_BAN)
-                                        self.ban_data[update.message.chat.id] = time.time() + settings.USAGE_BAN*60
-                                        break
-                                    if t["times_overused"] >= settings.WARNING_USAGE_COUNT:
-                                        self.updater.bot.sendMessage(update.message.chat.id,
-                                                                     core.locale.get_localized(self.locales["stop_spamming"], update.message.chat.id))
-                                        break
-                            self.coreplug_check_banned(self.dispatcher.bot, update)
-                    handler.handle_update(update, self.dispatcher)
-                    if settings.USAGE_BAN_STATE:
-                        LOGGER.debug(handler)
-                        if not isinstance(handler, MessageHandler):
-                            if update.message:
-                                if update.message.chat.id in self.chat_last_handler:
-                                    self.chat_last_handler[update.message.chat.id]["used"] = time.time()
-                                else:
-                                    self.chat_last_handler[update.message.chat.id] = {"handler":handler, "used":time.time(), "times_overused":1}
-                                LOGGER.debug(self.chat_last_handler[update.message.chat.id])
-                    break
-
-            # HACK: I cant find anywhere on importing this exception
-            # # Stop processing with any other handler. 
-            # except dispatcher.DispatcherHandlerStop:
-            #     self.dispatcher.logger.debug('Stopping further handlers due to DispatcherHandlerStop')
-            #     break
-
-            # Dispatch any error.
-            except TelegramError as te:
-                self.dispatcher.logger.warning('A TelegramError was raised while processing the Update')
-
-                try:
-                    self.dispatcher.dispatch_error(update, te)
-                except Dispatcher.DispatcherHandlerStop:
-                    self.dispatcher.logger.debug('Error handler stopped further handlers')
-                    break
-                except Exception:
-                    self.dispatcher.logger.exception('An uncaught error was raised while handling the error')
-
-            # Errors should not stop the thread.
-            except Exception:
-                self.dispatcher.logger.exception('An uncaught error was raised while processing the update')
-
-PINKY = OctoBot_PTB(UPDATER)
+PINKY = OctoBot_PTB(BOT)
 
 
 
@@ -441,44 +313,15 @@ def send_message(bot, update, reply):
                                                                callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
         msg.edit_reply_markup(reply_markup=kbrmrkup)
 
-PINKY.myusername = UPDATER.bot.getMe().username
+PINKY.myusername = BOT.getMe().username
 if __name__ == '__main__':
-    if settings.USE_PTB_UPDATER:
-        LOGGER.info("Adding handlers...")
-        DISPATCHER.add_handler(MessageHandler(
-            Filters.all, onmessage_handle), group=0)
-        DISPATCHER.add_handler(MessageHandler(
-            Filters.command, command_handle), group=1)
-        DISPATCHER.add_handler(InlineQueryHandler(inline_handle))
-        DISPATCHER.add_handler(CallbackQueryHandler(inlinebutton))
-        # DISPATCHER.add_handler(MessageHandler(
-        #     Filters.status_update.new_chat_members, new_someone), group=0)
-        DISPATCHER.add_handler(MessageHandler(
-            Filters.all, PINKY.coreplug_check_banned), group=0)
-        DISPATCHER.add_error_handler(error_handle)
-        if settings.WEBHOOK_ON:
-            LOGGER.info("Webhook is ON")
-            UPDATER.start_webhook(listen='0.0.0.0',
-                                  port=settings.WEBHOOK_PORT,
-                                  url_path=settings.WEBHOOK_URL_PATH,
-                                  key=settings.WEBHOOK_KEY,
-                                  cert=settings.WEBHOOK_CERT,
-                                  webhook_url=settings.WEBHOOK_URL,
-                                  bootstrap_retries=-1)
-        else:
-            LOGGER.info("Webhook is OFF")
-            UPDATER.start_polling(clean=True,
-                                  bootstrap_retries=-1)
-            # UPDATER.idle()
-
-    else:
-        OBUPDATER = obupdater.OBUpdater(BOT, PINKY)
-        OBUPDATER.command_handle = command_handle
-        OBUPDATER.inline_handle = inline_handle
-        OBUPDATER.inline_kbd_handle = inlinebutton
-        OBUPDATER.message_handle = onmessage_handle
-        OBUPDATER.update_handle = update_handle
-        OBUPDATER.start_poll()
+    OBUPDATER = obupdater.OBUpdater(BOT, PINKY)
+    OBUPDATER.command_handle = command_handle
+    OBUPDATER.inline_handle = inline_handle
+    OBUPDATER.inline_kbd_handle = inlinebutton
+    OBUPDATER.message_handle = onmessage_handle
+    OBUPDATER.update_handle = update_handle
+    OBUPDATER.start_poll()
     badplugins = 0
     for plugin in PINKY.plugins:
         if plugin["state"] != "OK":

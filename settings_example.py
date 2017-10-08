@@ -53,8 +53,7 @@ IGNORE_USAGE_COUNT = 8
 USAGE_BAN = 10
 # Do usage ban?
 USAGE_BAN_STATE = False
-# Use python-telegram-bot Updater instead of OctoBot custom Updater.
-# Enable it if you have issues
+# Removed: python-telegram-bot
 USE_PTB_UPDATER = False
 # Words AI should react to
 AI_REACT = []
