@@ -61,3 +61,5 @@ AI_REACT = []
 API_AI_TOKEN = ""
 # Do colorful logging?
 COLORFUL_LOGS = True
+# Thread count
+THREADS = 32

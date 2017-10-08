@@ -1,4 +1,5 @@
 import telegram
+import queue
 import time
 import html
 import logging
@@ -14,6 +15,7 @@ class OBUpdater:
 
     def __init__(self, bot, modloader):
         self.logger = logging.getLogger("OBUpdater")
+        self.upd_queue = queue.Queue()
         self.bot = bot
         self.modloader = modloader
         self.bot.modloader = self.modloader
@@ -34,43 +36,46 @@ class OBUpdater:
     def inline_kbd_handle(self, bot, update):
         raise RuntimeError
 
-    def _work_on_update(self, update):
-        try:
-            self.update_id = update.update_id + 1
-            if update.message:
-                if update.message.caption:
-                    update.message.text = update.message.caption
-                if update.message.reply_to_message:
-                    if update.message.reply_to_message.caption:
-                        update.message.reply_to_message.text = update.message.reply_to_message.caption
-                if update.message.text:
-                    if update.message.text.startswith("/"):
-                        threading.Thread(target=self.command_handle, args=(self.bot, update)).start()
-                    else:
-                        threading.Thread(target=self.message_handle, args=(self.bot, update)).start()
-                else:
-                    threading.Thread(target=self.message_handle, args=(self.bot, update)).start()
-            elif update.inline_query:
-                update.message = telegram.Message(0, update.inline_query.from_user, datetime.datetime.now(), update.inline_query.from_user)
-                threading.Thread(target=self.inline_handle, args=(self.bot, update)).start()
-            elif update.callback_query:
-                threading.Thread(target=self.inline_kbd_handle, args=(self.bot, update)).start()
-            threading.Thread(target=self.update_handle, args=(self.bot, update)).start()
-        except Exception as e:
-            # raise e
-            self.logger.error(e)
-            self.bot.sendMessage(
-                settings.ADMIN, "Uncatched Exception:\n<code>%s</code>\nUpdate:\n<code>%s</code>" % (html.escape(traceback.format_exc()), update), parse_mode="HTML")
-
-
-    def get_updates(self):
-        for update in self.bot.get_updates(offset=self.update_id, timeout=1):
-            self._work_on_update(update)
-
     def _poll_worker(self):
+        while 1:
+            try:
+                update = self.upd_queue.get()
+                if update.update_id < self.update_id - 1:
+                    self.logger.error("Updater is going mad! It gives old updates! This is bug!")
+                    continue
+                if update.message:
+                    if update.message.caption:
+                        update.message.text = update.message.caption
+                    if update.message.reply_to_message:
+                        if update.message.reply_to_message.caption:
+                            update.message.reply_to_message.text = update.message.reply_to_message.caption
+                    if update.message.text:
+                        if update.message.text.startswith("/"):
+                            self.command_handle(self.bot, update)
+                        else:
+                            self.message_handle(self.bot, update)
+                    else:
+                        self.message_handle(self.bot, update)
+                elif update.inline_query:
+                    update.message = telegram.Message(0, update.inline_query.from_user, datetime.datetime.now(), update.inline_query.from_user)
+                    threading.Thread(self.inline_handle(self.bot, update))
+                elif update.callback_query:
+                    self.inline_kbd_handle(self.bot, update)
+                self.update_handle(self.bot, update)
+            except Exception as e:
+                # raise e
+                self.logger.error(e)
+                self.bot.sendMessage(
+                    settings.ADMIN, "Uncatched Exception:\n<code>%s</code>\nUpdate:\n<code>%s</code>" % (html.escape(traceback.format_exc()), update), parse_mode="HTML")
+
+
+    def update_fetcher_thread(self):
         while True:
             try:
-                self.get_updates()
+                updates = self.bot.get_updates(offset=self.update_id, timeout=1)
+                for update in updates:
+                    self.upd_queue.put(update)
+                    self.update_id = update.update_id + 1
             except telegram.error.NetworkError:
                 time.sleep(1)
             except telegram.error.Unauthorized:
@@ -82,8 +87,7 @@ class OBUpdater:
                     settings.ADMIN, "Uncatched TelegramError:\n<code>%s</code>" % html.escape(traceback.format_exc()), parse_mode="HTML")
 
     def start_poll(self):
-        try:
-            self.update_id = self.bot.get_updates()[-1].update_id + 1
-        except IndexError:
-            self.update_id = None
-        threading.Thread(target=self._poll_worker).start()
+        self.update_id = 0
+        threading.Thread(target=self.update_fetcher_thread).start()
+        for i in range(0, settings.THREADS):
+            threading.Thread(target=self._poll_worker).start()
