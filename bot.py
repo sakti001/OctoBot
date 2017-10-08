@@ -1,8 +1,11 @@
 """
 OctoBot rewrite
 """
+import platform
+
+import extras
 import logging
-import os
+import os, sys
 import re
 import html
 import textwrap
@@ -13,7 +16,7 @@ from uuid import uuid4
 from telegram import (Bot, InlineKeyboardButton, InlineKeyboardMarkup,
                       InlineQueryResultArticle, InlineQueryResultCachedPhoto,
                       InlineQueryResultPhoto, InputTextMessageContent,
-                      TelegramError, Update)
+                      Update)
 
 import obupdater
 import core
@@ -22,25 +25,10 @@ import time
 
 
 global TRACKER
-start = time.time()
-RLOG = logging.getLogger()
-
-MAIN_PID = os.getpid()
-cleanr = re.compile('<.*?>')
-logging.basicConfig(level=settings.LOG_LEVEL)
-TRACKER = {}
-BANNEDUSERS = []
-LOGGER = logging.getLogger("OctoBot-Brain")
-BOT = Bot(settings.TOKEN)
-COMMAND_INFO = """
-%(command)s
-Description: <i>%(description)s</i>
-Additional info and examples:
-<i>%(docs)s</i>
-"""
-if settings.USE_PTB_UPDATER:
-    LOGGER.critical("Python-Telegram-Bot updater support is DISCONTINUED. Will use OctoBot Updater.")
-
+if settings.COLORFUL_LOGS:
+    logging.setLoggerClass(extras.ColoredLogger)
+else:
+    logging.basicConfig(level=settings.LOG_LEVEL)
 
 class OctoBot_PTB(core.OctoBotCore, logging.NullHandler):
 
@@ -136,7 +124,6 @@ class OctoBot_PTB(core.OctoBotCore, logging.NullHandler):
                 update.message.chat.id, core.locale.get_localized(self.locales["chat_banned"]) % ban)
             self.bot.leaveChat(update.message.chat.id)
 
-PINKY = OctoBot_PTB(BOT)
 
 
 
@@ -313,8 +300,45 @@ def send_message(bot, update, reply):
                                                                callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
         msg.edit_reply_markup(reply_markup=kbrmrkup)
 
-PINKY.myusername = BOT.getMe().username
 if __name__ == '__main__':
+    LOGGER = logging.getLogger("OctoBot-Brain")
+
+    RLOG = logging.getLogger()
+    RLOG.setLevel(level=settings.LOG_LEVEL)
+    LOGGER.setLevel(level=settings.LOG_LEVEL)
+    print("""
+
+   ____       __        ____        __ 
+  / __ \_____/ /_____  / __ )____  / /_
+ / / / / ___/ __/ __ \/ __  / __ \/ __/
+/ /_/ / /__/ /_/ /_/ / /_/ / /_/ / /_  
+\____/\___/\__/\____/_____/\____/\__/  
+                                       
+                                                     
+                                                                     
+    """)
+
+    start = time.time()
+    MAIN_PID = os.getpid()
+    cleanr = re.compile('<.*?>')
+    TRACKER = {}
+    BANNEDUSERS = []
+
+    COMMAND_INFO = """
+    %(command)s
+    Description: <i>%(description)s</i>
+    Additional info and examples:
+    <i>%(docs)s</i>
+    """
+
+
+
+    BOT = Bot(settings.TOKEN)
+
+    if settings.USE_PTB_UPDATER:
+        LOGGER.critical("Python-Telegram-Bot updater support is DISCONTINUED. Will use OctoBot Updater.")
+    PINKY = OctoBot_PTB(BOT)
+    PINKY.myusername = BOT.getMe().username
     OBUPDATER = obupdater.OBUpdater(BOT, PINKY)
     OBUPDATER.command_handle = command_handle
     OBUPDATER.inline_handle = inline_handle
@@ -322,15 +346,22 @@ if __name__ == '__main__':
     OBUPDATER.message_handle = onmessage_handle
     OBUPDATER.update_handle = update_handle
     OBUPDATER.start_poll()
-    badplugins = 0
+    badplugins, okplugins = [], []
     for plugin in PINKY.plugins:
         if plugin["state"] != "OK":
-            badplugins += 1
+            badplugins.append(plugin["name"])
+        else:
+            okplugins.append(plugin["name"])
+    LOGGER.info("Loaded totally %s plugins. %s total", len(PINKY.plugins) - len(badplugins),len(PINKY.plugins))
+    LOGGER.info("Plugins that loaded successfully:%s", okplugins)
+    if badplugins:
+        LOGGER.warning("Plugins that were not loaded:%s", badplugins)
+    LOGGER.info("Load complete. Bot Username: %s. Starting poll", BOT.getMe().username)
     BOT.sendMessage(settings.ADMIN,
                             "OctoBot started up.\n" +
                             str(len(PINKY.plugins)) + " plugins total\n" +
-                            str(badplugins) + " plugins were not loaded\n" +
-                            str(len(PINKY.plugins) - badplugins) +
+                            str(len(badplugins)) + " plugins were not loaded\n" +
+                            str(len(PINKY.plugins) - len(badplugins)) +
                             " plugins were loaded OK\n" +
                             "Started up in " +
                             str(round(time.time() - start, 2))
