@@ -50,8 +50,10 @@ class OctoBot_PTB(core.OctoBotCore, logging.NullHandler):
     def gen_help(self, uid):
         _ = lambda x: core.locale.get_localized(
                 x, uid)
-        docs = ""
+        docs = []
         for plugin in self.plugins:
+            pd = []
+            pd.append("<b>%s</b>:" % plugin["name"])
             for command in plugin["commands"]:
                 if "description" in command:
                     if "hidden" in command:
@@ -59,13 +61,17 @@ class OctoBot_PTB(core.OctoBotCore, logging.NullHandler):
                             continue
                     if command["description"].startswith("locale://"):
                         t = command["description"].lstrip("locale://").split("/")
-                        docs += "%s - <i>%s</i>\n" % (command["command"],
-                                                      _(core.locale.locale_string(t[1],t[0])))
+                        pd.append("%s - <i>%s</i>\n" % (command["command"],
+                                                      _(core.locale.locale_string(t[1],t[0]))))
                     else:
-                        docs += "%s - <i>%s</i>\n" % (command["command"],
-                                                      command["description"])
-        docs += "\n" + \
-            _(self.locales["help_find_more"])
+                        pd.append("%s - <i>%s</i>\n" % (command["command"],
+                                                      command["description"]))
+            if len(pd) != 1:
+                docs += pd
+        docs.append("\n" + \
+            _(self.locales["help_find_more"]))
+        docs = "\n".join(docs)
+        self.logger.debug(docs)
         return docs
 
     def check_banned(self, chat_id):
