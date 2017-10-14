@@ -61,13 +61,13 @@ class OctoBot_PTB(core.OctoBotCore, logging.NullHandler):
                             continue
                     if command["description"].startswith("locale://"):
                         t = command["description"].lstrip("locale://").split("/")
-                        pd.append("%s - <i>%s</i>\n" % (command["command"],
+                        pd.append("%s - <i>%s</i>" % (command["command"],
                                                       _(core.locale.locale_string(t[1],t[0]))))
                     else:
-                        pd.append("%s - <i>%s</i>\n" % (command["command"],
+                        pd.append("%s - <i>%s</i>" % (command["command"],
                                                       command["description"]))
             if len(pd) != 1:
-                docs += pd
+                docs.append("\n".join(pd) + "\n")
         docs.append("\n" + \
             _(self.locales["help_find_more"]))
         docs = "\n".join(docs)
