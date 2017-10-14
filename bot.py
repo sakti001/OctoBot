@@ -3,7 +3,6 @@ OctoBot rewrite
 """
 import platform
 
-import extras
 import logging
 import os, sys
 import re
@@ -25,10 +24,7 @@ import time
 
 
 global TRACKER
-if settings.COLORFUL_LOGS:
-    logging.setLoggerClass(extras.ColoredLogger)
-else:
-    logging.basicConfig(level=settings.LOG_LEVEL)
+
 
 class OctoBot_PTB(core.OctoBotCore, logging.NullHandler):
 
@@ -302,9 +298,7 @@ def send_message(bot, update, reply):
 
 if __name__ == '__main__':
     LOGGER = logging.getLogger("OctoBot-Brain")
-
-    RLOG = logging.getLogger()
-    RLOG.setLevel(level=settings.LOG_LEVEL)
+    logging.basicConfig(level=settings.LOG_LEVEL)
     LOGGER.setLevel(level=settings.LOG_LEVEL)
     print("""
 
