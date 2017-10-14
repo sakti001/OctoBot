@@ -68,45 +68,6 @@ class OctoBot_PTB(core.OctoBotCore, logging.NullHandler):
             _(self.locales["help_find_more"])
         return docs
 
-    def coreplug_start(self, bot, update, user, args):
-        _ = lambda x: core.locale.get_localized(x, update.message.chat.id)
-        if len(args) > 0:
-            if args[0] == "help" and update.message.chat.type == "private":
-                return core.message(self.gen_help(update.message.chat.id), parse_mode="HTML")
-        kbd = InlineKeyboardMarkup(
-            [
-                [InlineKeyboardButton(
-                    text=_(self.locales["help_button"]), url="http://t.me/%s?start=help" % bot.getMe().username)],
-                [InlineKeyboardButton(
-                    text=_(self.locales["news_button"]), url=settings.NEWS_LINK)],
-                [InlineKeyboardButton(
-                    text=_(self.locales["chat_button"]), url=settings.CHAT_LINK)],
-            ]
-        )
-        return core.message(_(self.locales["start"]) % bot.getMe().first_name, inline_keyboard=kbd)
-
-    def coreplug_help(self, bot, update, user, args):
-        _ = lambda x: core.locale.get_localized(x, update.message.chat.id)
-        if args:
-            for plugin in self.plugins:
-                for command in plugin["commands"]:
-                    if args[0].lower() == command["command"].lower():
-                        info = {"command": args[
-                            0], "description": _(self.locales["not_available"]), "docs": _(self.locales["not_available"])}
-                        info["description"] = command["description"]
-                        if command["function"].__doc__:
-                            info["docs"] = html.escape(
-                                textwrap.dedent(command["function"].__doc__))
-                        return core.message(_(self.locales["help_format"]) % info, parse_mode="HTML")
-            return core.locale.get_localized(self.locales["unknown_help_command"], update.message.chat.id)
-        else:
-            if update.message.chat.type == "private":
-                return core.message(self.gen_help(update.message.chat.id), parse_mode="HTML")
-            else:
-                keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(
-                    text=_(self.locales["help_button_into_pm"]), url="http://t.me/%s?start=help" % bot.getMe().username)]])
-                return core.message(_(self.locales["help_button_into_pm_text"]), inline_keyboard=keyboard)
-
     def check_banned(self, chat_id):
         if str(chat_id) in self.banned:
             return self.banned[str(chat_id)]
@@ -150,7 +111,7 @@ def command_handle(bot: Bot, update: Update):
                             parse_mode='HTML')
             reply = core.message(
                 _(PINKY.locales["error_occured"]), failed=True)
-        send_message(bot, update, reply)
+        return send_message(bot, update, reply)
 
 
 def inline_handle(bot: Bot, update: Update):
@@ -203,7 +164,7 @@ def inline_handle(bot: Bot, update: Update):
                                switch_pm_text="List commands",
                                switch_pm_parameter="help",
                                cache_time=1)
-
+    return True
 
 def inlinebutton(bot, update):
     query = update.callback_query
@@ -216,15 +177,16 @@ def inlinebutton(bot, update):
                 goodpeople.append(int(admin.user.id))
         if int(query.from_user.id) in goodpeople:
             bot.deleteMessage(data[0], data[1])
-            query.answer(_("delete_success"))
+            return query.answer(_("delete_success"))
         else:
-            query.answer(_("delete_failure"))
+            return query.answer(_("delete_failure"))
     else:
         presp = PINKY.handle_inline_button(query)
         if presp:
             presp(bot, update, query)
+            return True
         else:
-            update.callback_query.answer("I dont think this button is supposed to do anything ¯\_(ツ)_/¯")
+            return update.callback_query.answer("I dont think this button is supposed to do anything ¯\_(ツ)_/¯")
 
 def update_handle(bot, update):
     pinkyresp = PINKY.handle_update(update)

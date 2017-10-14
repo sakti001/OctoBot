@@ -41,7 +41,7 @@ class OBUpdater:
             try:
                 update = self.upd_queue.get()
                 if update.update_id < self.update_id - 1:
-                    self.logger.error("Updater is going mad! It gives old updates! This is bug!")
+                    self.logger.error("Updater is going mad! It gives old updates! This is a bug!")
                     continue
                 if update.message:
                     if update.message.caption:
@@ -49,18 +49,19 @@ class OBUpdater:
                     if update.message.reply_to_message:
                         if update.message.reply_to_message.caption:
                             update.message.reply_to_message.text = update.message.reply_to_message.caption
+                    if self.message_handle(self.bot, update):
+                        continue
                     if update.message.text:
                         if update.message.text.startswith("/"):
-                            self.command_handle(self.bot, update)
-                        else:
-                            self.message_handle(self.bot, update)
-                    else:
-                        self.message_handle(self.bot, update)
+                            if self.command_handle(self.bot, update):
+                                continue
                 elif update.inline_query:
                     update.message = telegram.Message(0, update.inline_query.from_user, datetime.datetime.now(), update.inline_query.from_user)
-                    threading.Thread(self.inline_handle(self.bot, update))
+                    if self.inline_handle(self.bot, update):
+                        continue
                 elif update.callback_query:
-                    self.inline_kbd_handle(self.bot, update)
+                    if self.inline_kbd_handle(self.bot, update):
+                        continue
                 self.update_handle(self.bot, update)
             except Exception as e:
                 # raise e
@@ -76,7 +77,7 @@ class OBUpdater:
                 for update in updates:
                     self.upd_queue.put(update)
                     self.update_id = update.update_id + 1
-            except telegram.error.NetworkError:
+            except (telegram.error.NetworkError, telegram.error.InvalidServerResponse):
                 time.sleep(1)
             except telegram.error.Unauthorized:
                 # The user has removed or blocked the bot.
@@ -85,6 +86,10 @@ class OBUpdater:
                 self.logger.error(e)
                 self.bot.sendMessage(
                     settings.ADMIN, "Uncatched TelegramError:\n<code>%s</code>" % html.escape(traceback.format_exc()), parse_mode="HTML")
+            except Exception as e:
+                self.logger.critical("Uncatched error in updater!")
+                self.logger.error(e)
+                time.sleep(1)
 
     def start_poll(self):
         self.update_id = 0
