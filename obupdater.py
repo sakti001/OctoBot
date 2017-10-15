@@ -77,7 +77,7 @@ class OBUpdater:
                 for update in updates:
                     self.upd_queue.put(update)
                     self.update_id = update.update_id + 1
-            except (telegram.error.NetworkError, telegram.error.InvalidServerResponse):
+            except telegram.error.NetworkError:
                 time.sleep(1)
             except telegram.error.Unauthorized:
                 # The user has removed or blocked the bot.
@@ -93,6 +93,7 @@ class OBUpdater:
 
     def start_poll(self):
         self.update_id = 0
-        threading.Thread(target=self.update_fetcher_thread).start()
         for i in range(0, settings.THREADS):
             threading.Thread(target=self._poll_worker).start()
+        threading.Thread(target=self.update_fetcher_thread).start()
+        
