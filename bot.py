@@ -203,14 +203,7 @@ def update_handle(bot, update):
 def onmessage_handle(bot, update):
     if update.message:
         pinkyresp = []
-        if update.message.new_chat_members:
-            me = bot.getMe()
-            for user in update.message.new_chat_members:
-                if user == me:
-                    pinkyresp = [lambda bot, update:PINKY.coreplug_start(
-                        bot, update, None, [])]
-        else:
-            pinkyresp = PINKY.handle_message(update)
+        pinkyresp = PINKY.handle_message(update)
         for handle in pinkyresp:
             reply = handle(bot, update)
             send_message(bot, update, reply)
