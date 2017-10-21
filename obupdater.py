@@ -49,6 +49,8 @@ class OBUpdater:
                     if update.message.reply_to_message:
                         if update.message.reply_to_message.caption:
                             update.message.reply_to_message.text = update.message.reply_to_message.caption
+                    if not update.message.text:
+                        update.message.text = ""
                     if self.message_handle(self.bot, update):
                         continue
                     if self.command_handle(self.bot, update):
