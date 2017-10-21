@@ -51,10 +51,8 @@ class OBUpdater:
                             update.message.reply_to_message.text = update.message.reply_to_message.caption
                     if self.message_handle(self.bot, update):
                         continue
-                    if update.message.text:
-                        if update.message.text.startswith("/"):
-                            if self.command_handle(self.bot, update):
-                                continue
+                    if self.command_handle(self.bot, update):
+                        continue
                 elif update.inline_query:
                     update.message = telegram.Message(0, update.inline_query.from_user, datetime.datetime.now(), update.inline_query.from_user)
                     if self.inline_handle(self.bot, update):
