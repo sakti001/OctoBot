@@ -116,7 +116,7 @@ def command_handle(bot: Bot, update: Update):
                                 traceback.format_exc()),
                             parse_mode='HTML')
             reply = core.message(
-                _(PINKY.locales["error_occured"]), failed=True)
+                _(PINKY.locales["error_occured_please_report"]) % settings.CHAT_LINK, parse_mode="HTML", failed=True)
         return send_message(bot, update, reply)
 
 
