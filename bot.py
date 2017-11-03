@@ -234,21 +234,23 @@ def send_message(bot, update, reply):
     else:
         message = update.message
     if reply.photo:
-        msg = message.reply_photo(reply.photo)
+        msg = message.reply_photo(reply.photo, **reply.extra_args)
         if reply.text:
             msg = message.reply_text(reply.text,
                                      parse_mode=reply.parse_mode,
-                                     reply_markup=reply.inline_keyboard)
+                                     reply_markup=reply.inline_keyboard,
+                                     **reply.extra_args)
     elif reply.file:
         msg = message.reply_document(document=reply.file,
                                      caption=reply.text,
-                                     reply_markup=reply.inline_keyboard)
+                                     reply_markup=reply.inline_keyboard,
+                                     **reply.extra_args)
     elif reply.voice:
-        msg = message.reply_voice(voice=reply.voice, caption=reply.text, reply_markup=reply.inline_keyboard)
+        msg = message.reply_voice(voice=reply.voice, caption=reply.text, reply_markup=reply.inline_keyboard, **reply.extra_args)
     else:
         msg = message.reply_text(reply.text,
                                  parse_mode=reply.parse_mode,
-                                 reply_markup=reply.inline_keyboard)
+                                 reply_markup=reply.inline_keyboard, **reply.extra_args)
     if reply.failed:
         msdict = msg.to_dict()
         msdict["chat_id"] = msg.chat_id
