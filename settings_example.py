@@ -61,3 +61,5 @@ AI_REACT = []
 API_AI_TOKEN = ""
 # Thread count
 THREADS = 32
+# Fono Api token. Get yours from https://fonoapi.freshpixl.com/token/generate
+FONOAPI_TOKEN = None
