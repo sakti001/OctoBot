@@ -63,3 +63,5 @@ API_AI_TOKEN = ""
 THREADS = 32
 # Fono Api token. Get yours from https://fonoapi.freshpixl.com/token/generate
 FONOAPI_TOKEN = None
+# Plugins to skip during loading process
+SKIP_PLUGINS = []
