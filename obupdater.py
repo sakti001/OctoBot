@@ -56,6 +56,7 @@ class OBUpdater:
                     if self.command_handle(self.bot, update):
                         continue
                 elif update.inline_query:
+                    update.inline_query.query = html.unescape(update.inline_query.query.replace("<br/>", "\n"))
                     update.message = telegram.Message(0, update.inline_query.from_user, datetime.datetime.now(), update.inline_query.from_user)
                     if self.inline_handle(self.bot, update):
                         continue
