@@ -208,16 +208,6 @@ def onmessage_handle(bot, update):
             reply = handle(bot, update)
             send_message(bot, update, reply)
 
-
-def error_handle(bot, update, error):
-    """Handles bad things"""
-    # if update is None:
-    #     # Kill main process
-    #     LOGGER.error("Very weird shit happend, killing myself...")
-    #     os.system('kill %d' % MAIN_PID)
-    bot.sendMessage(chat_id=settings.ADMIN,
-                    text='Update "{}" caused error "{}"'.format(update, error))
-
 def test(bot, update):
     command_handle(bot, update)
 
