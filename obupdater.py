@@ -41,7 +41,6 @@ class OBUpdater:
             try:
                 update = self.upd_queue.get()
                 if update.update_id < self.update_id - 1:
-                    self.logger.error("Updater is going mad! It gives old updates! This is a bug!")
                     continue
                 if update.message:
                     if update.message.caption:
@@ -66,9 +65,11 @@ class OBUpdater:
             except Exception as e:
                 # raise e
                 self.logger.error(e)
-                self.bot.sendMessage(
-                    settings.ADMIN, "Uncatched Exception:\n<code>%s</code>\nUpdate:\n<code>%s</code>" % (html.escape(traceback.format_exc()), update), parse_mode="HTML")
-
+                try:
+                    self.bot.sendMessage(
+                        settings.ADMIN, "Uncatched Exception:\n<code>%s</code>\nUpdate:\n<code>%s</code>" % (html.escape(traceback.format_exc()), update), parse_mode="HTML")
+                except Exception:
+                    self.logger.error("Unable to send exception report!")
 
     def update_fetcher_thread(self):
         while True:
@@ -84,8 +85,11 @@ class OBUpdater:
                 self.update_id += 1
             except telegram.error.TelegramError as e:
                 self.logger.error(e)
-                self.bot.sendMessage(
-                    settings.ADMIN, "Uncatched TelegramError:\n<code>%s</code>" % html.escape(traceback.format_exc()), parse_mode="HTML")
+                try:
+                    self.bot.sendMessage(
+                        settings.ADMIN, "Uncatched TelegramError:\n<code>%s</code>" % html.escape(traceback.format_exc()), parse_mode="HTML")
+                except Exception:
+                    self.logger.error("Unable to send TelegramError report!")
             except Exception as e:
                 self.logger.critical("Uncatched error in updater!")
                 self.logger.error(e)
