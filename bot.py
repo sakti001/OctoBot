@@ -15,6 +15,7 @@ from uuid import uuid4
 from telegram import (Bot, InlineKeyboardButton, InlineKeyboardMarkup,
                       InlineQueryResultArticle, InlineQueryResultCachedPhoto,
                       InlineQueryResultPhoto, InputTextMessageContent,
+                      InlineQueryResultVoice,
                       Update)
 
 import obupdater
@@ -127,45 +128,60 @@ def inline_handle(bot: Bot, update: Update):
     result = []
     pinkyresp = PINKY.handle_inline(update)
     if pinkyresp:
-        reply = pinkyresp[0](bot, update, user, args)
-        if reply is None:
-            return
-        if not isinstance(reply, core.message):
-            reply = core.message.from_old_format(reply)
-        if reply.parse_mode:
-            result.append(InlineQueryResultArticle(
-                id=uuid4(),
-                title=pinkyresp[1],
-                description=re.sub(cleanr, "", reply.text.split("\n")[0]),
-                input_message_content=InputTextMessageContent(
-                    reply.text, parse_mode=reply.parse_mode),
-                reply_markup=reply.inline_keyboard
-            ))
-        elif reply.photo:
-            if type(reply.photo) == str:
-                result.append(InlineQueryResultPhoto(photo_url=reply.photo,
-                                                     thumb_url=reply.photo,
-                                                     id=uuid4(),
-                                                     reply_markup=reply.inline_keyboard)
-                              )
-            else:
-                pic = bot.sendPhoto(
-                    chat_id=settings.CHANNEL, photo=reply.photo)
-                pic = pic.photo[0].file_id
-                result.append(InlineQueryResultCachedPhoto(
-                    photo_file_id=pic,
-                    caption=reply.text,
+        for command in pinkyresp:
+            reply = command[0](bot, update, user, args)
+            if reply is None:
+                return
+            if not isinstance(reply, core.message):
+                reply = core.message.from_old_format(reply)
+            if reply.parse_mode:
+                result.append(InlineQueryResultArticle(
                     id=uuid4(),
+                    title=command[1],
+                    description=re.sub(cleanr, "", reply.text.split("\n")[0]),
+                    input_message_content=InputTextMessageContent(
+                        reply.text, parse_mode=reply.parse_mode),
                     reply_markup=reply.inline_keyboard
                 ))
-        elif not reply.text == "":
-            result.append(InlineQueryResultArticle(
-                id=uuid4(),
-                title=pinkyresp[1],
-                description=reply.text.split("\n")[0],
-                input_message_content=InputTextMessageContent(reply.text),
-                reply_markup=reply.inline_keyboard
-            ))
+            elif reply.photo:
+                if type(reply.photo) == str:
+                    result.append(InlineQueryResultPhoto(photo_url=reply.photo,
+                                                         thumb_url=reply.photo,
+                                                         id=uuid4(),
+                                                         reply_markup=reply.inline_keyboard)
+                                  )
+                else:
+                    pic = bot.sendPhoto(
+                        chat_id=settings.CHANNEL, photo=reply.photo)
+                    pic = pic.photo[0].file_id
+                    result.append(InlineQueryResultCachedPhoto(
+                        photo_file_id=pic,
+                        caption=reply.text,
+                        id=uuid4(),
+                        reply_markup=reply.inline_keyboard
+                    ))
+            elif reply.voice:
+                result.append(InlineQueryResultArticle(
+                    id=uuid4(),
+                    title="Unsupported content",
+                    description="It is impossible to send non-hosted voice right now, due to Telegram limitations",
+                    input_message_content=InputTextMessageContent("It is impossible to send non-hosted voice right now, due to Telegram limitations"),
+                ))
+            elif not reply.text == "":
+                result.append(InlineQueryResultArticle(
+                    id=uuid4(),
+                    title=command[1],
+                    description=reply.text.split("\n")[0],
+                    input_message_content=InputTextMessageContent(reply.text),
+                    reply_markup=reply.inline_keyboard
+                ))
+            else:
+                result.append(InlineQueryResultArticle(
+                    id=uuid4(),
+                    title="Unsupported content",
+                    description="This command doesnt work in inline mode.",
+                    input_message_content=InputTextMessageContent("This command doesnt work in inline mode."),
+                ))
     update.inline_query.answer(results=result,
                                switch_pm_text="List commands",
                                switch_pm_parameter="help",
