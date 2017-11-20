@@ -65,3 +65,7 @@ THREADS = 32
 FONOAPI_TOKEN = None
 # Plugins to skip during loading process
 SKIP_PLUGINS = []
+# Extra links in /start.
+# Example
+# EXTRA_LINKS = [{"Test":"example.com"}]
+EXTRA_LINKS = []
