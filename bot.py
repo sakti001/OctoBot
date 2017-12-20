@@ -224,9 +224,6 @@ def onmessage_handle(bot, update):
             reply = handle(bot, update)
             send_message(bot, update, reply)
 
-def test(bot, update):
-    command_handle(bot, update)
-
 def send_message(bot, update, reply):
     if reply is None:
         return
