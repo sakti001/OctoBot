@@ -15,8 +15,8 @@ from uuid import uuid4
 from telegram import (Bot, InlineKeyboardButton, InlineKeyboardMarkup,
                       InlineQueryResultArticle, InlineQueryResultCachedPhoto,
                       InlineQueryResultPhoto, InputTextMessageContent,
-                      InlineQueryResultVoice,
                       Update)
+from telegram import error as telegram_errors
 
 import obupdater
 import core
@@ -230,37 +230,45 @@ def send_message(bot, update, reply):
     elif not isinstance(reply, core.message):
         # Backwards compability
         reply = core.message.from_old_format(reply)
-    _ = lambda x: core.locale.get_localized(x, update.message.chat.id)
-    LOGGER.debug("Reply to prev message: %s", reply.reply_to_prev_message)
-    if update.message.reply_to_message and reply.reply_to_prev_message:
-        message = update.message.reply_to_message
-    else:
-        message = update.message
-    if reply.photo:
-        msg = message.reply_photo(reply.photo, **reply.extra_args)
-        if reply.text:
+    try:
+        _ = lambda x: core.locale.get_localized(x, update.message.chat.id)
+        LOGGER.debug("Reply to prev message: %s", reply.reply_to_prev_message)
+        if update.message.reply_to_message and reply.reply_to_prev_message:
+            message = update.message.reply_to_message
+        else:
+            message = update.message
+        if reply.photo:
+            msg = message.reply_photo(reply.photo, **reply.extra_args)
+            if reply.text:
+                msg = message.reply_text(reply.text,
+                                         parse_mode=reply.parse_mode,
+                                         reply_markup=reply.inline_keyboard,
+                                         **reply.extra_args)
+        elif reply.file:
+            msg = message.reply_document(document=reply.file,
+                                         caption=reply.text,
+                                         reply_markup=reply.inline_keyboard,
+                                         **reply.extra_args)
+        elif reply.voice:
+            msg = message.reply_voice(voice=reply.voice, caption=reply.text, reply_markup=reply.inline_keyboard, **reply.extra_args)
+        else:
             msg = message.reply_text(reply.text,
                                      parse_mode=reply.parse_mode,
-                                     reply_markup=reply.inline_keyboard,
-                                     **reply.extra_args)
-    elif reply.file:
-        msg = message.reply_document(document=reply.file,
-                                     caption=reply.text,
-                                     reply_markup=reply.inline_keyboard,
-                                     **reply.extra_args)
-    elif reply.voice:
-        msg = message.reply_voice(voice=reply.voice, caption=reply.text, reply_markup=reply.inline_keyboard, **reply.extra_args)
-    else:
-        msg = message.reply_text(reply.text,
-                                 parse_mode=reply.parse_mode,
-                                 reply_markup=reply.inline_keyboard, **reply.extra_args)
-    if reply.failed:
-        msdict = msg.to_dict()
-        msdict["chat_id"] = msg.chat_id
-        msdict["user_id"] = update.message.from_user.id
-        kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton(_(PINKY.locales["message_delete"]),
-                                                               callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
-        msg.edit_reply_markup(reply_markup=kbrmrkup)
+                                     reply_markup=reply.inline_keyboard, **reply.extra_args)
+        if reply.failed:
+            msdict = msg.to_dict()
+            msdict["chat_id"] = msg.chat_id
+            msdict["user_id"] = update.message.from_user.id
+            kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton(_(PINKY.locales["message_delete"]),
+                                                                   callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
+            msg.edit_reply_markup(reply_markup=kbrmrkup)
+    except telegram_errors.BadRequest as e:
+        if str(e).lower() == "reply message not found":
+            LOGGER.debug("Reply message not found - sending message without reply")
+            reply.reply_to_prev_message = False
+            send_message(bot, update, reply)
+        else:
+            raise e
 
 if __name__ == '__main__':
     LOGGER = logging.getLogger("OctoBot-Brain")
