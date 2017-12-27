@@ -3,6 +3,8 @@ import queue
 import time
 import html
 import logging
+import webhooks
+import urllib.parse
 
 import settings
 
@@ -19,7 +21,7 @@ class OBUpdater:
         self.bot = bot
         self.modloader = modloader
         self.bot.modloader = self.modloader
-        self.update_id = None
+        self.update_id = 0
 
     def update_handle(self, bot, update):
         raise RuntimeError
@@ -96,9 +98,21 @@ class OBUpdater:
                 self.logger.error(e)
                 time.sleep(1)
 
-    def start_poll(self):
-        self.update_id = 0
+    def _create_workers(self):
+        self.logger.info("Creating update workers...")
         for i in range(0, settings.THREADS):
+            self.logger.debug("Creating update worker %s out of %s", i, settings.THREADS)
             threading.Thread(target=self._poll_worker).start()
+        self.logger.info("Creating update workers done")
+
+    def start_poll(self):
+        self.bot.deleteWebhook() # Make sure no webhooks are installed
+        self._create_workers()
         threading.Thread(target=self.update_fetcher_thread).start()
         
+    def start_webhook(self):
+        self.bot.deleteWebhook() # Make sure no other webhooks are installed
+        self._create_workers()
+        webhook = webhooks.create_webhook(self.upd_queue, self.bot)
+        self.bot.setWebhook(url=urllib.parse.urljoin(settings.WEBHOOK_URL, "/%s" % settings.TOKEN))
+        webhook.run(host=settings.WEBHOOK_PORT_EXPOSE, port=settings.WEBHOOK_PORT)

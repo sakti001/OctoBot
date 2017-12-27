@@ -8,3 +8,4 @@ gtts
 bs4
 PyLyrics
 ujson
+flask

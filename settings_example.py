@@ -27,11 +27,14 @@ REDDITUA = ""
 # You should use webhook because it is
 # better than polling telegram
 WEBHOOK_ON = False
-WEBHOOK_CERT = "cert.pem"
-WEBHOOK_KEY = "private.key"
+# Your server domain
+WEBHOOK_URL = "https://example.com"
+# How expose port:
+# 127.0.0.1 - accept only localhost connections
+# 0.0.0.0 - accept every connection.
+# Default: 127.0.0.1
+WEBHOOK_PORT_EXPOSE = "127.0.0.1"
 WEBHOOK_PORT = 8443
-WEBHOOK_URL_PATH = "TOKEN"
-WEBHOOK_URL = "https://example.com:8443/TOKEN"
 # Yandex Translation API
 # You can get your token from
 # https://tech.yandex.com/translate/
@@ -43,22 +46,6 @@ NEWS_LINK = ""
 ABOUT_TEXT = """
 Powered by Python-Telegram-Bot, Admin:@username
 """
-# Command usage cooldown. (In seconds)
-USAGE_COOLDOWN = 10
-# Usages before warning
-WARNING_USAGE_COUNT = 5
-# Usages before starting to ignore for 10 minutes
-IGNORE_USAGE_COUNT = 8
-# Command usage ban time. (In minutes)
-USAGE_BAN = 10
-# Do usage ban?
-USAGE_BAN_STATE = False
-# Removed: python-telegram-bot
-USE_PTB_UPDATER = False
-# Words AI should react to
-AI_REACT = []
-# api.ai token. 
-API_AI_TOKEN = ""
 # Thread count
 THREADS = 32
 # Fono Api token. Get yours from https://fonoapi.freshpixl.com/token/generate

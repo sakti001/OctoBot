@@ -313,7 +313,10 @@ if __name__ == '__main__':
     OBUPDATER.inline_kbd_handle = inlinebutton
     OBUPDATER.message_handle = onmessage_handle
     OBUPDATER.update_handle = update_handle
-    OBUPDATER.start_poll()
+    if settings.WEBHOOK_ON:
+        OBUPDATER.start_webhook()
+    else:
+        OBUPDATER.start_poll()
     badplugins, okplugins = [], []
     for plugin in PINKY.plugins:
         if plugin["state"] != "OK":
