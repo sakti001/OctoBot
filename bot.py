@@ -303,8 +303,6 @@ if __name__ == '__main__':
 
     BOT = Bot(settings.TOKEN)
 
-    if settings.USE_PTB_UPDATER:
-        LOGGER.critical("Python-Telegram-Bot updater support is DISCONTINUED. Will use OctoBot Updater.")
     PINKY = OctoBot_PTB(BOT)
     PINKY.myusername = BOT.getMe().username
     OBUPDATER = obupdater.OBUpdater(BOT, PINKY)
