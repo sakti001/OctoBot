@@ -188,17 +188,18 @@ def inline_handle(bot: Bot, update: Update):
                                cache_time=1)
     return True
 
+
 def inlinebutton(bot, update):
     query = update.callback_query
     _ = lambda x: core.locale.get_localized(PINKY.locales[x], query.from_user.id)
     if query.data.startswith("del"):
-        data = query.data.split(":")[1:]
-        goodpeople = [int(data[2]), settings.ADMIN]
-        if data[0].startswith("-"):
-            for admin in bot.getChatAdministrators(data[0]):
-                goodpeople.append(int(admin.user.id))
-        if int(query.from_user.id) in goodpeople:
-            bot.deleteMessage(data[0], data[1])
+        data = query.data.split(":")
+        goodpeople = [data[-1], settings.ADMIN]
+        if query.message.chat.type == query.message.chat.SUPERGROUP:
+            for admin in bot.getChatAdministrators(query.message.chat.id):
+                goodpeople.append(str(admin.user.id))
+        if str(query.from_user.id) in goodpeople:
+            query.message.delete()
             return query.answer(_("delete_success"))
         else:
             return query.answer(_("delete_failure"))
@@ -233,6 +234,9 @@ def send_message(bot, update, reply):
     try:
         _ = lambda x: core.locale.get_localized(x, update.message.chat.id)
         LOGGER.debug("Reply to prev message: %s", reply.reply_to_prev_message)
+        if reply.failed:
+            reply.inline_keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(_(PINKY.locales["message_delete"]),
+                                                                   callback_data="del:%s" % update.message.from_user.id)]])
         if update.message.reply_to_message and reply.reply_to_prev_message:
             message = update.message.reply_to_message
         else:
@@ -255,13 +259,6 @@ def send_message(bot, update, reply):
             msg = message.reply_text(reply.text,
                                      parse_mode=reply.parse_mode,
                                      reply_markup=reply.inline_keyboard, **reply.extra_args)
-        if reply.failed:
-            msdict = msg.to_dict()
-            msdict["chat_id"] = msg.chat_id
-            msdict["user_id"] = update.message.from_user.id
-            kbrmrkup = InlineKeyboardMarkup([[InlineKeyboardButton(_(PINKY.locales["message_delete"]),
-                                                                   callback_data="del:%(chat_id)s:%(message_id)s:%(user_id)s" % msdict)]])
-            msg.edit_reply_markup(reply_markup=kbrmrkup)
     except telegram_errors.BadRequest as e:
         if str(e).lower() == "reply message not found":
             LOGGER.debug("Reply message not found - sending message without reply")
