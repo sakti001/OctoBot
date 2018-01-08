@@ -13,8 +13,17 @@ Settings file for OctoBot-rewrite
 LOG_LEVEL = 20
 # Your user ID
 ADMIN = 174781687
-# Bot token from botfather
+# Bot token of MAIN bot from botfather
 TOKEN = "PUTYOURTOKENHERE"
+# Mirror tokens
+# Example
+# MIRRORS = {
+#   "Mirror A":"Mirror A token",
+#   "Mirror B":"Mirror B token"
+# }
+MIRRORS = {
+
+}
 # OctoBot needs this channel to make inline images work
 # Put channel ID here
 CHANNEL = 0

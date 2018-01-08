@@ -322,13 +322,12 @@ if __name__ == '__main__':
     LOGGER.info("Plugins that loaded successfully:%s", okplugins)
     if badplugins:
         LOGGER.warning("Plugins that were not loaded:%s", badplugins)
-    LOGGER.info("Load complete. Bot Username: %s. Starting poll", BOT.getMe().username)
     BOT.sendMessage(settings.ADMIN,
-                            "OctoBot started up.\n" +
-                            str(len(PINKY.plugins)) + " plugins total\n" +
-                            str(len(badplugins)) + " plugins were not loaded\n" +
-                            str(len(PINKY.plugins) - len(badplugins)) +
-                            " plugins were loaded OK\n" +
-                            "Started up in " +
-                            str(round(time.time() - start, 2))
-                            )
+                    "OctoBot started up.\n" +
+                    str(len(PINKY.plugins)) + " plugins total\n" +
+                    str(len(badplugins)) + " plugins were not loaded\n" +
+                    str(len(PINKY.plugins) - len(badplugins)) +
+                    " plugins were loaded OK\n" +
+                    "Started up in " +
+                    str(round(time.time() - start, 2))
+                    )

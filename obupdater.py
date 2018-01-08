@@ -3,7 +3,7 @@ import queue
 import time
 import html
 import logging
-import webhooks
+import webhooks, long_poll
 import urllib.parse
 
 import settings
@@ -41,7 +41,7 @@ class OBUpdater:
     def _poll_worker(self):
         while 1:
             try:
-                update = self.upd_queue.get()
+                bot, update = self.upd_queue.get()
                 if update.update_id < self.update_id - 1:
                     continue
                 if update.message:
@@ -52,63 +52,43 @@ class OBUpdater:
                             update.message.reply_to_message.text = update.message.reply_to_message.caption
                     if not update.message.text:
                         update.message.text = ""
-                    if self.message_handle(self.bot, update):
+                    if self.message_handle(bot, update):
                         continue
-                    if self.command_handle(self.bot, update):
+                    if self.command_handle(bot, update):
                         continue
                 elif update.inline_query:
                     update.inline_query.query = html.unescape(update.inline_query.query.replace("<br/>", "\n"))
                     update.message = telegram.Message(0, update.inline_query.from_user, datetime.datetime.now(), update.inline_query.from_user)
-                    if self.inline_handle(self.bot, update):
+                    if self.inline_handle(bot, update):
                         continue
                 elif update.callback_query:
-                    if self.inline_kbd_handle(self.bot, update):
+                    if self.inline_kbd_handle(bot, update):
                         continue
-                self.update_handle(self.bot, update)
+                self.update_handle(bot, update)
             except Exception as e:
                 # raise e
                 self.logger.error(e)
                 try:
-                    self.bot.sendMessage(
+                    bot.sendMessage(
                         settings.ADMIN, "Uncatched Exception:\n<code>%s</code>\nUpdate:\n<code>%s</code>" % (html.escape(traceback.format_exc()), update), parse_mode="HTML")
                 except Exception:
                     self.logger.error("Unable to send exception report!")
 
-    def update_fetcher_thread(self):
-        while True:
-            try:
-                updates = self.bot.get_updates(offset=self.update_id, timeout=1)
-                for update in updates:
-                    self.upd_queue.put(update)
-                    self.update_id = update.update_id + 1
-            except telegram.error.NetworkError:
-                time.sleep(1)
-            except telegram.error.Unauthorized:
-                # The user has removed or blocked the bot.
-                self.update_id += 1
-            except telegram.error.TelegramError as e:
-                self.logger.error(e)
-                try:
-                    self.bot.sendMessage(
-                        settings.ADMIN, "Uncatched TelegramError:\n<code>%s</code>" % html.escape(traceback.format_exc()), parse_mode="HTML")
-                except Exception:
-                    self.logger.error("Unable to send TelegramError report!")
-            except Exception as e:
-                self.logger.critical("Uncatched error in updater!")
-                self.logger.error(e)
-                time.sleep(1)
-
     def _create_workers(self):
         self.logger.info("Creating update workers...")
         for i in range(0, settings.THREADS):
-            self.logger.debug("Creating update worker %s out of %s", i, settings.THREADS)
+            self.logger.debug("Creating update worker %s out of %s", i+1, settings.THREADS)
             threading.Thread(target=self._poll_worker).start()
         self.logger.info("Creating update workers done")
 
     def start_poll(self):
         self.bot.deleteWebhook() # Make sure no webhooks are installed
         self._create_workers()
-        threading.Thread(target=self.update_fetcher_thread).start()
+        mirrors = settings.MIRRORS
+        mirrors["Main Bot"] = settings.TOKEN
+        for mirror_name, mirror_token in mirrors.items():
+            upd_poller = long_poll.create_poll(mirror_name, mirror_token, self.upd_queue, self.modloader)
+            threading.Thread(target=upd_poller).start()
         
     def start_webhook(self):
         self.bot.deleteWebhook() # Make sure no other webhooks are installed
