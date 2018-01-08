@@ -99,7 +99,7 @@ def command_handle(bot: Bot, update: Update):
     LOGGER.debug("Handling command")
     if update.message.reply_to_message and update.message.reply_to_message.photo:
         update.message.reply_to_message.text = update.message.reply_to_message.caption
-    pinkyresp = PINKY.handle_command(update)
+    pinkyresp = MODLOADER.handle_command(update)
     LOGGER.debug(pinkyresp)
     if pinkyresp:
         bot.send_chat_action(update.message.chat.id, "typing")
@@ -117,7 +117,7 @@ def command_handle(bot: Bot, update: Update):
                                 traceback.format_exc()),
                             parse_mode='HTML')
             reply = core.message(
-                _(PINKY.locales["error_occured_please_report"]) % settings.CHAT_LINK, parse_mode="HTML", failed=True)
+                _(MODLOADER.locales["error_occured_please_report"]) % settings.CHAT_LINK, parse_mode="HTML", failed=True)
         return send_message(bot, update, reply)
 
 
@@ -126,7 +126,7 @@ def inline_handle(bot: Bot, update: Update):
     args = query.split(" ")[1:]
     user = update.inline_query.from_user
     result = []
-    pinkyresp = PINKY.handle_inline(update)
+    pinkyresp = MODLOADER.handle_inline(update)
     if pinkyresp:
         for command in pinkyresp:
             reply = command[0](bot, update, user, args)
@@ -191,7 +191,7 @@ def inline_handle(bot: Bot, update: Update):
 
 def inlinebutton(bot, update):
     query = update.callback_query
-    _ = lambda x: core.locale.get_localized(PINKY.locales[x], query.from_user.id)
+    _ = lambda x: core.locale.get_localized(MODLOADER.locales[x], query.from_user.id)
     if query.data.startswith("del"):
         data = query.data.split(":")
         goodpeople = [data[-1], settings.ADMIN]
@@ -204,7 +204,7 @@ def inlinebutton(bot, update):
         else:
             return query.answer(_("delete_failure"))
     else:
-        presp = PINKY.handle_inline_button(query)
+        presp = MODLOADER.handle_inline_button(query)
         if presp:
             presp(bot, update, query)
             return True
@@ -212,7 +212,7 @@ def inlinebutton(bot, update):
             return update.callback_query.answer("I dont think this button is supposed to do anything ¯\_(ツ)_/¯")
 
 def update_handle(bot, update):
-    pinkyresp = PINKY.handle_update(update)
+    pinkyresp = MODLOADER.handle_update(update)
     for handle in pinkyresp:
         reply = handle(bot, update)
         send_message(bot, update, reply)
@@ -220,7 +220,7 @@ def update_handle(bot, update):
 def onmessage_handle(bot, update):
     if update.message:
         pinkyresp = []
-        pinkyresp = PINKY.handle_message(update)
+        pinkyresp = MODLOADER.handle_message(update)
         for handle in pinkyresp:
             reply = handle(bot, update)
             send_message(bot, update, reply)
@@ -235,8 +235,8 @@ def send_message(bot, update, reply):
         _ = lambda x: core.locale.get_localized(x, update.message.chat.id)
         LOGGER.debug("Reply to prev message: %s", reply.reply_to_prev_message)
         if reply.failed:
-            reply.inline_keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(_(PINKY.locales["message_delete"]),
-                                                                   callback_data="del:%s" % update.message.from_user.id)]])
+            reply.inline_keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(_(MODLOADER.locales["message_delete"]),
+                                                                                callback_data="del:%s" % update.message.from_user.id)]])
         if update.message.reply_to_message and reply.reply_to_prev_message:
             message = update.message.reply_to_message
         else:
@@ -300,9 +300,9 @@ if __name__ == '__main__':
 
     BOT = Bot(settings.TOKEN)
 
-    PINKY = OctoBot_PTB(BOT)
-    PINKY.myusername = BOT.getMe().username
-    OBUPDATER = obupdater.OBUpdater(BOT, PINKY)
+    MODLOADER = OctoBot_PTB(BOT)
+    MODLOADER.myusername = BOT.getMe().username
+    OBUPDATER = obupdater.OBUpdater(BOT, MODLOADER)
     OBUPDATER.command_handle = command_handle
     OBUPDATER.inline_handle = inline_handle
     OBUPDATER.inline_kbd_handle = inlinebutton
@@ -313,20 +313,20 @@ if __name__ == '__main__':
     else:
         OBUPDATER.start_poll()
     badplugins, okplugins = [], []
-    for plugin in PINKY.plugins:
+    for plugin in MODLOADER.plugins:
         if plugin["state"] != "OK":
             badplugins.append(plugin["name"])
         else:
             okplugins.append(plugin["name"])
-    LOGGER.info("Loaded totally %s plugins. %s total", len(PINKY.plugins) - len(badplugins),len(PINKY.plugins))
+    LOGGER.info("Loaded totally %s plugins. %s total", len(MODLOADER.plugins) - len(badplugins), len(MODLOADER.plugins))
     LOGGER.info("Plugins that loaded successfully:%s", okplugins)
     if badplugins:
         LOGGER.warning("Plugins that were not loaded:%s", badplugins)
     BOT.sendMessage(settings.ADMIN,
                     "OctoBot started up.\n" +
-                    str(len(PINKY.plugins)) + " plugins total\n" +
+                    str(len(MODLOADER.plugins)) + " plugins total\n" +
                     str(len(badplugins)) + " plugins were not loaded\n" +
-                    str(len(PINKY.plugins) - len(badplugins)) +
+                    str(len(MODLOADER.plugins) - len(badplugins)) +
                     " plugins were loaded OK\n" +
                     "Started up in " +
                     str(round(time.time() - start, 2))
