@@ -1,6 +1,5 @@
 from flask import Flask, request, abort
 from telegram.update import Update
-__name__ = "OctoBot webhook"
 
 def create_webhook(upd_queue, bot):
     webhook_app = Flask(__name__)

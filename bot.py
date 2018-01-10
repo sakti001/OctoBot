@@ -4,10 +4,9 @@ OctoBot rewrite
 import platform
 
 import logging
-import os, sys
+import os
 import re
 import html
-import textwrap
 import traceback
 import json
 from uuid import uuid4
@@ -22,9 +21,6 @@ import obupdater
 import core
 import settings
 import time
-
-
-global TRACKER
 
 
 class OctoBot_PTB(core.OctoBotCore, logging.NullHandler):
@@ -108,7 +104,7 @@ def command_handle(bot: Bot, update: Update):
         try:
             reply = pinkyresp(
                 bot, update, user, args)
-        except Exception as e:
+        except Exception:
             bot.sendMessage(settings.ADMIN,
                             "Error occured in update:" +
                             "\n<code>%s</code>\n" % html.escape(str(update)) +
@@ -144,7 +140,7 @@ def inline_handle(bot: Bot, update: Update):
                     reply_markup=reply.inline_keyboard
                 ))
             elif reply.photo:
-                if type(reply.photo) == str:
+                if isinstance(reply.photo, str):
                     result.append(InlineQueryResultPhoto(photo_url=reply.photo,
                                                          thumb_url=reply.photo,
                                                          id=uuid4(),
@@ -242,23 +238,23 @@ def send_message(bot, update, reply):
         else:
             message = update.message
         if reply.photo:
-            msg = message.reply_photo(reply.photo, **reply.extra_args)
+            message.reply_photo(reply.photo, **reply.extra_args)
             if reply.text:
-                msg = message.reply_text(reply.text,
-                                         parse_mode=reply.parse_mode,
-                                         reply_markup=reply.inline_keyboard,
-                                         **reply.extra_args)
+                message.reply_text(reply.text,
+                                   parse_mode=reply.parse_mode,
+                                   reply_markup=reply.inline_keyboard,
+                                   **reply.extra_args)
         elif reply.file:
-            msg = message.reply_document(document=reply.file,
-                                         caption=reply.text,
-                                         reply_markup=reply.inline_keyboard,
-                                         **reply.extra_args)
+            message.reply_document(document=reply.file,
+                                   caption=reply.text,
+                                   reply_markup=reply.inline_keyboard,
+                                   **reply.extra_args)
         elif reply.voice:
-            msg = message.reply_voice(voice=reply.voice, caption=reply.text, reply_markup=reply.inline_keyboard, **reply.extra_args)
+            message.reply_voice(voice=reply.voice, caption=reply.text, reply_markup=reply.inline_keyboard, **reply.extra_args)
         else:
-            msg = message.reply_text(reply.text,
-                                     parse_mode=reply.parse_mode,
-                                     reply_markup=reply.inline_keyboard, **reply.extra_args)
+            message.reply_text(reply.text,
+                               parse_mode=reply.parse_mode,
+                               reply_markup=reply.inline_keyboard, **reply.extra_args)
     except telegram_errors.BadRequest as e:
         if str(e).lower() == "reply message not found":
             LOGGER.debug("Reply message not found - sending message without reply")
@@ -295,7 +291,6 @@ if __name__ == '__main__':
     Additional info and examples:
     <i>%(docs)s</i>
     """
-
 
 
     BOT = Bot(settings.TOKEN)
