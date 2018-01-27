@@ -144,7 +144,8 @@ def inline_handle(bot: Bot, update: Update):
                     result.append(InlineQueryResultPhoto(photo_url=reply.photo,
                                                          thumb_url=reply.photo,
                                                          id=uuid4(),
-                                                         reply_markup=reply.inline_keyboard)
+                                                         reply_markup=reply.inline_keyboard,
+                                                         caption=reply.text)
                                   )
                 else:
                     pic = bot.sendPhoto(
