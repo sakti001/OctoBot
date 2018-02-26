@@ -19,5 +19,3 @@
 - `TOKEN` - Bot token. You can get one from [@BotFather](https://t.me/botfather)
 
 3. `pip3 install -r requirements.txt` - Install dependencies
-
-4. `mkdir plugdata` - folder for plugins data

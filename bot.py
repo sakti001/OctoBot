@@ -16,6 +16,7 @@ from telegram import (Bot, InlineKeyboardButton, InlineKeyboardMarkup,
                       InlineQueryResultPhoto, InputTextMessageContent,
                       Update)
 from telegram import error as telegram_errors
+os.makedirs("plugdata", exist_ok=True)
 
 import obupdater
 import core
