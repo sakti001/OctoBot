@@ -12,6 +12,7 @@ def create_poll(mirrors, upd_queue, modloader):
     def update_fetcher_thread():
         logger.info("Starting update polling")
         update_id = {}
+        done_messages = []
         for mirror_name in mirrors:
             update_id[mirror_name] = None
         while True:
@@ -22,8 +23,12 @@ def create_poll(mirrors, upd_queue, modloader):
                     updates = bot.get_updates(offset=update_id[mirror_name], timeout=1)
                     logger.debug("Getting updates from mirror %s", mirror_name)
                     for update in updates:
-                        upd_queue.put((bot, update))
-                        update_id[mirror_name] = update.update_id + 1
+                        if (update.message and not update.message.message_id in done_messages)\
+                            or not update.message:
+                            upd_queue.put((bot, update))
+                            update_id[mirror_name] = update.update_id + 1
+                            if update.message: done_messages.insert(0, update.message.message_id)
+                            if len(done_messages) > 50: done_messages.pop()
                 except telegram.error.NetworkError:
                     time.sleep(1)
                 except telegram.error.Unauthorized:
