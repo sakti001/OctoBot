@@ -95,14 +95,14 @@ def command_handle(bot: Bot, update: Update):
     LOGGER.debug("Handling command")
     if update.message.reply_to_message and update.message.reply_to_message.photo:
         update.message.reply_to_message.text = update.message.reply_to_message.caption
-    pinkyresp = MODLOADER.handle_command(update)
-    LOGGER.debug(pinkyresp)
-    if pinkyresp:
+    modloader_response = MODLOADER.handle_command(update)
+    LOGGER.debug(modloader_response)
+    if modloader_response:
         bot.send_chat_action(update.message.chat.id, "typing")
         user = update.message.from_user
         args = update.message.text.split(" ")[1:]
         try:
-            reply = pinkyresp(
+            reply = modloader_response(
                 bot, update, user, args)
         except Exception:
             bot.sendMessage(settings.ADMIN,
@@ -122,9 +122,9 @@ def inline_handle(bot: Bot, update: Update):
     args = query.split(" ")[1:]
     user = update.inline_query.from_user
     result = []
-    pinkyresp = MODLOADER.handle_inline(update)
-    if pinkyresp:
-        for command in pinkyresp:
+    modloader_response = MODLOADER.handle_inline(update)
+    if modloader_response:
+        for command in modloader_response:
             reply = command[0](bot, update, user, args)
             if reply is None:
                 return
@@ -190,15 +190,18 @@ def inlinebutton(bot, update):
     query = update.callback_query
     _ = lambda x: core.locale.get_localized(MODLOADER.locales[x], query.from_user.id)
     if query.data.startswith("del"):
-        data = query.data.split(":")
-        goodpeople = [data[-1], settings.ADMIN]
-        if query.message.chat.type == query.message.chat.SUPERGROUP:
-            for admin in bot.getChatAdministrators(query.message.chat.id):
-                goodpeople.append(str(admin.user.id))
-        if str(query.from_user.id) in goodpeople:
-            query.message.delete()
-            return query.answer(_("delete_success"))
-        else:
+        try:
+            data = query.data.split(":")
+            goodpeople = [data[-1], settings.ADMIN]
+            if query.message.chat.type == query.message.chat.SUPERGROUP:
+                for admin in bot.getChatAdministrators(query.message.chat.id):
+                    goodpeople.append(str(admin.user.id))
+            if str(query.from_user.id) in goodpeople:
+                query.message.delete()
+                return query.answer(_("delete_success"))
+            else:
+                return query.answer(_("delete_failure"))
+        except telegram_errors.BadRequest:
             return query.answer(_("delete_failure"))
     else:
         presp = MODLOADER.handle_inline_button(query)
@@ -208,17 +211,17 @@ def inlinebutton(bot, update):
         else:
             return update.callback_query.answer("I dont think this button is supposed to do anything ¯\_(ツ)_/¯")
 
+
 def update_handle(bot, update):
-    pinkyresp = MODLOADER.handle_update(update)
-    for handle in pinkyresp:
+    modloader_response = MODLOADER.handle_update(update)
+    for handle in modloader_response:
         reply = handle(bot, update)
         send_message(bot, update, reply)
 
 def onmessage_handle(bot, update):
     if update.message:
-        pinkyresp = []
-        pinkyresp = MODLOADER.handle_message(update)
-        for handle in pinkyresp:
+        modloader_response = MODLOADER.handle_message(update)
+        for handle in modloader_response:
             reply = handle(bot, update)
             send_message(bot, update, reply)
 
