@@ -86,8 +86,9 @@ class OBUpdater:
         self._create_workers()
         mirrors = settings.MIRRORS
         mirrors["Main Bot"] = settings.TOKEN
-        self.logger.debug(mirrors)
-        long_poll.create_poll(mirrors, self.upd_queue, self.modloader)()
+        for mirror_name, mirror_token in mirrors.items():
+            upd_poller = long_poll.create_poll(mirror_name, mirror_token, self.upd_queue, self.modloader)
+            threading.Thread(target=upd_poller).start()
 
     def start_webhook(self):
         self.bot.deleteWebhook() # Make sure no other webhooks are installed
