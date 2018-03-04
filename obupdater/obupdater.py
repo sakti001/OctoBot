@@ -10,6 +10,7 @@ import settings
 import threading
 import traceback
 import datetime
+from raven import Client
 
 
 
@@ -40,8 +41,15 @@ class OBUpdater:
 
     def _poll_worker(self):
         while 1:
+            bot, update = self.upd_queue.get()
+            if settings.USE_SENTRY:
+                sentry_client = Client(settings.SENTRY_URL)
+                sentry_client.user_context(update.to_dict())
+                sentry_client.tags_context({"Captured In": "Worker",
+                                            "Bot": bot.getMe().first_name})
+            else:
+                sentry_client = None
             try:
-                bot, update = self.upd_queue.get()
                 if update.update_id < self.update_id - 1:
                     continue
                 if update.message:
@@ -52,28 +60,53 @@ class OBUpdater:
                             update.message.reply_to_message.text = update.message.reply_to_message.caption
                     if not update.message.text:
                         update.message.text = ""
+                    if settings.USE_SENTRY:
+                        sentry_client.tags_context({"Captured In": "Message Handle",
+                                                    "Bot": bot.getMe().first_name})
+                        sentry_client.user_context(update.message.from_user.to_dict())
+                        sentry_client.extra_context(update.message.to_dict())
                     if self.message_handle(bot, update):
                         continue
-                    if self.command_handle(bot, update):
+                    if settings.USE_SENTRY:
+                        sentry_client.tags_context({"Captured In": "Command Handle",
+                                                    "Bot": bot.getMe().first_name})
+                        sentry_client.user_context(update.message.from_user.to_dict())
+                        sentry_client.extra_context(update.message.to_dict())
+                    if self.command_handle(bot, update, sentry_client):
                         continue
                 elif update.inline_query:
+                    if settings.USE_SENTRY:
+                        sentry_client.tags_context({"Captured In": "Inline Handle",
+                                                    "Bot": bot.getMe().first_name})
+                        sentry_client.user_context(update.inline_query.from_user.to_dict())
+                        sentry_client.extra_context(update.inline_query.to_dict())
                     update.inline_query.query = html.unescape(update.inline_query.query.replace("<br/>", "\n"))
                     update.message = telegram.Message(0, update.inline_query.from_user, datetime.datetime.now(), update.inline_query.from_user)
                     if self.inline_handle(bot, update):
                         continue
                 elif update.callback_query:
+                    if settings.USE_SENTRY:
+                        sentry_client.tags_context({"Captured In": "Callback Query Handle",
+                                                    "Bot": bot.getMe().first_name})
+                        sentry_client.user_context(update.callback_query.from_user.to_dict())
+                        sentry_client.extra_context(update.callback_query.to_dict())
                     if self.inline_kbd_handle(bot, update):
                         continue
                 self.update_handle(bot, update)
             except telegram.error.Unauthorized: pass
             except Exception as e:
-                # raise e
                 self.logger.error(e)
                 try:
-                    bot.sendMessage(
-                        settings.ADMIN, "Uncatched Exception:\n<code>%s</code>\nUpdate:\n<code>%s</code>" % (html.escape(traceback.format_exc()), update), parse_mode="HTML")
-                except Exception:
+                    if settings.USE_SENTRY:
+                        sentry_client.captureException()
+                    else:
+                        bot.sendMessage(
+                            settings.ADMIN,
+                            "Uncatched worker Exception:\n<code>%s</code>\nUpdate:\n<code>%s</code>" %
+                            (html.escape(traceback.format_exc()), update), parse_mode="HTML")
+                except Exception as e:
                     self.logger.error("Unable to send exception report!")
+                    self.logger.error(e)
 
     def _create_workers(self):
         self.logger.info("Creating update workers...")

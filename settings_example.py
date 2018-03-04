@@ -65,3 +65,6 @@ SKIP_PLUGINS = []
 # Example
 # EXTRA_LINKS = [{"Test":"example.com"}]
 EXTRA_LINKS = []
+# sentry.io settings
+USE_SENTRY = False
+SENTRY_URL = ""

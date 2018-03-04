@@ -9,3 +9,4 @@ bs4
 PyLyrics
 ujson
 flask
+raven

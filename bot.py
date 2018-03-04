@@ -84,7 +84,7 @@ class OctoBot_PTB(core.OctoBotCore, logging.NullHandler):
             self.bot.leaveChat(update.message.chat.id)
 
 
-def command_handle(bot: Bot, update: Update):
+def command_handle(bot: Bot, update: Update, sentry_client):
     """
     Handles commands
     """
@@ -102,13 +102,16 @@ def command_handle(bot: Bot, update: Update):
             reply = modloader_response(
                 bot, update, user, args)
         except Exception:
-            bot.sendMessage(settings.ADMIN,
-                            "Error occured in update:" +
-                            "\n<code>%s</code>\n" % html.escape(str(update)) +
-                            "Traceback:" +
-                            "\n<code>%s</code>" % html.escape(
-                                traceback.format_exc()),
-                            parse_mode='HTML')
+            if settings.USE_SENTRY:
+                sentry_client.captureException()
+            else:
+                bot.sendMessage(settings.ADMIN,
+                                "Error occured in update:" +
+                                "\n<code>%s</code>\n" % html.escape(str(update)) +
+                                "Traceback:" +
+                                "\n<code>%s</code>" % html.escape(
+                                    traceback.format_exc()),
+                                parse_mode='HTML')
             reply = core.message(
                 _(MODLOADER.locales["error_occured_please_report"]) % settings.CHAT_LINK, parse_mode="HTML", failed=True)
         return send_message(bot, update, reply)
@@ -215,12 +218,14 @@ def update_handle(bot, update):
         reply = handle(bot, update)
         send_message(bot, update, reply)
 
+
 def onmessage_handle(bot, update):
     if update.message:
         modloader_response = MODLOADER.handle_message(update)
         for handle in modloader_response:
             reply = handle(bot, update)
             send_message(bot, update, reply)
+
 
 def send_message(bot, update, reply):
     if reply is None:
