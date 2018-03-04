@@ -94,7 +94,7 @@ class OBUpdater:
                     if self.inline_kbd_handle(bot, update):
                         continue
                 self.update_handle(bot, update)
-            except telegram.error.Unauthorized: pass
+            except (telegram.error.Unauthorized, telegram.error.NetworkError): pass
             except Exception as e:
                 self.logger.error(e)
                 try:
