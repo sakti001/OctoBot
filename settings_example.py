@@ -68,3 +68,4 @@ EXTRA_LINKS = []
 # sentry.io settings
 USE_SENTRY = False
 SENTRY_URL = ""
+SENTRY_ENV = "production"

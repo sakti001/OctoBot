@@ -4,13 +4,12 @@ import html
 import logging
 from obupdater import long_poll, webhooks
 import urllib.parse
-
+import os
 import settings
-
 import threading
 import traceback
 import datetime
-from raven import Client
+import raven
 
 
 
@@ -43,7 +42,9 @@ class OBUpdater:
         while 1:
             bot, update = self.upd_queue.get()
             if settings.USE_SENTRY:
-                sentry_client = Client(settings.SENTRY_URL)
+                sentry_client = raven.Client(settings.SENTRY_URL,
+                                             release=raven.fetch_git_sha(''.join(os.path.split(os.path.dirname(__file__))[:1])),
+                                             environment=settings.SENTRY_ENV)
                 sentry_client.user_context(update.to_dict())
                 sentry_client.tags_context({"Captured In": "Worker",
                                             "Bot": bot.getMe().first_name})
