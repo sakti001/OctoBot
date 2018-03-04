@@ -103,7 +103,7 @@ def command_handle(bot: Bot, update: Update, sentry_client):
                 bot, update, user, args)
         except Exception:
             if settings.USE_SENTRY:
-                sentry_client.captureException()
+                exc_code = sentry_client.captureException()
             else:
                 bot.sendMessage(settings.ADMIN,
                                 "Error occured in update:" +
@@ -112,8 +112,12 @@ def command_handle(bot: Bot, update: Update, sentry_client):
                                 "\n<code>%s</code>" % html.escape(
                                     traceback.format_exc()),
                                 parse_mode='HTML')
+            errmsg = _(MODLOADER.locales["error_occured_please_report"]) % settings.CHAT_LINK
+            if settings.USE_SENTRY:
+                errmsg += _(MODLOADER.locales["sentry_code"]) % exc_code
             reply = core.message(
-                _(MODLOADER.locales["error_occured_please_report"]) % settings.CHAT_LINK, parse_mode="HTML", failed=True)
+                errmsg,
+                parse_mode="HTML", failed=True)
         return send_message(bot, update, reply)
 
 
