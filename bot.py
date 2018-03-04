@@ -1,8 +1,6 @@
 """
 OctoBot rewrite
 """
-import platform
-
 import logging
 import os
 import re
@@ -84,8 +82,6 @@ class OctoBot_PTB(core.OctoBotCore, logging.NullHandler):
             self.bot.sendMessage(
                 update.message.chat.id, core.locale.get_localized(self.locales["chat_banned"]) % ban)
             self.bot.leaveChat(update.message.chat.id)
-
-
 
 
 def command_handle(bot: Bot, update: Update):
