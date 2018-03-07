@@ -126,6 +126,7 @@ def inline_handle(bot: Bot, update: Update):
     args = query.split(" ")[1:]
     user = update.inline_query.from_user
     result = []
+    # Handle normal commands support
     modloader_response = MODLOADER.handle_inline(update)
     if modloader_response:
         for command in modloader_response:
@@ -183,10 +184,18 @@ def inline_handle(bot: Bot, update: Update):
                     description="This command doesnt work in inline mode.",
                     input_message_content=InputTextMessageContent("This command doesnt work in inline mode."),
                 ))
-    update.inline_query.answer(results=result,
-                               switch_pm_text="List commands",
-                               switch_pm_parameter="help",
-                               cache_time=1)
+    # Handle custom inline commands
+    modloader_response = MODLOADER.handle_inline_custom(update)
+    for resp in modloader_response:
+        result += resp(bot, query)
+    result = result[:49]
+    try:
+        update.inline_query.answer(results=result,
+                                   switch_pm_text="List commands",
+                                   switch_pm_parameter="help",
+                                   cache_time=1)
+    except Exception as e:
+        LOGGER.critical(str(e))
     return True
 
 
