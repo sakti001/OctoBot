@@ -43,7 +43,10 @@ class OBUpdater:
             bot, update = self.upd_queue.get()
             if settings.USE_SENTRY:
                 sentry_client = raven.Client(settings.SENTRY_URL,
-                                             release=raven.fetch_git_sha(''.join(os.path.split(os.path.dirname(__file__))[:1])),
+                                             refs=[{
+                                             "commit":raven.fetch_git_sha(''.join(os.path.split(os.path.dirname(__file__))[:1])),
+                                             "repository":settings.SENTRY_REPO
+                                             }],
                                              environment=settings.SENTRY_ENV)
                 sentry_client.user_context(update.to_dict())
                 sentry_client.tags_context({"Captured In": "Worker",
