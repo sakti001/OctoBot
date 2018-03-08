@@ -92,22 +92,23 @@ def create_catalog(plugin, get_definition, command, description):
 	def catalog_inline(bot, query):
 		term = " ".join(query.split(" ")[1:])
 		results = []
-		try:
-			definitions = get_definition(term, 1, count=25)
-		except IndexError as e:
-			if str(e) == "Not found":
-				return []
-			else:
-				raise e
-		for definition in definitions[0]:
-			input_mes = InputTextMessageContent(str(definition), 
-											  	parse_mode="HTML")
-			results.append(InlineQueryResultArticle(id=uuid4(),
-													title=plugin.name,
-													description=cleanhtml(definition.text),
-												    thumb_url=definition.thumbnail,
-												    hide_url=True,
-												    input_message_content=input_mes))
+		if len(term) > 0:
+			try:
+				definitions = get_definition(term, 1, count=25)
+			except IndexError as e:
+				if str(e) == "Not found":
+					return []
+				else:
+					raise e
+			for definition in definitions[0]:
+				input_mes = InputTextMessageContent(str(definition), 
+												  	parse_mode="HTML")
+				results.append(InlineQueryResultArticle(id=uuid4(),
+														title=plugin.name,
+														description=cleanhtml(definition.text),
+													    thumb_url=definition.thumbnail,
+													    hide_url=True,
+													    input_message_content=input_mes))
 		return results
 
 	return True
