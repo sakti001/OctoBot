@@ -243,24 +243,29 @@ def send_message(bot, update, reply):
             message = update.message.reply_to_message
         else:
             message = update.message
-        if reply.photo:
-            message.reply_photo(reply.photo, **reply.extra_args)
-            if reply.text:
-                message.reply_text(reply.text,
-                                   parse_mode=reply.parse_mode,
-                                   reply_markup=reply.inline_keyboard,
-                                   **reply.extra_args)
-        elif reply.file:
-            message.reply_document(document=reply.file,
-                                   caption=reply.text,
-                                   reply_markup=reply.inline_keyboard,
-                                   **reply.extra_args)
-        elif reply.voice:
-            message.reply_voice(voice=reply.voice, caption=reply.text, reply_markup=reply.inline_keyboard, **reply.extra_args)
+        if reply.reply_to_prev_message:
+            reply.extra_args["reply_to_message_id"] = message.message_id
         else:
-            message.reply_text(reply.text,
-                               parse_mode=reply.parse_mode,
-                               reply_markup=reply.inline_keyboard, **reply.extra_args)
+            reply.extra_args["reply_to_message_id"] = None
+        reply.extra_args["chat_id"] = message.chat_id
+        if reply.photo:
+            bot.sendPhoto(photo=reply.photo, **reply.extra_args)
+            if reply.text:
+                bot.sendMessage(text=reply.text,
+                                parse_mode=reply.parse_mode,
+                                reply_markup=reply.inline_keyboard,
+                                **reply.extra_args)
+        elif reply.file:
+            bot.sendDocument(document=reply.file,
+                             caption=reply.text,
+                             reply_markup=reply.inline_keyboard,
+                             **reply.extra_args)
+        elif reply.voice:
+            bot.sendVoice(voice=reply.voice, caption=reply.text, reply_markup=reply.inline_keyboard, **reply.extra_args)
+        else:
+            bot.sendMessage(text=reply.text,
+                            parse_mode=reply.parse_mode,
+                            reply_markup=reply.inline_keyboard, **reply.extra_args)
     except telegram_errors.BadRequest as e:
         if str(e).lower() == "reply message not found":
             LOGGER.debug("Reply message not found - sending message without reply")
