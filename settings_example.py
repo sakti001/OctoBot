@@ -69,3 +69,4 @@ EXTRA_LINKS = []
 USE_SENTRY = False
 SENTRY_URL = ""
 SENTRY_ENV = "production"
+SENTRY_REPO = "OctoBot"

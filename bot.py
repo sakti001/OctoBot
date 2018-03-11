@@ -103,7 +103,7 @@ def command_handle(bot: Bot, update: Update, sentry_client):
                 bot, update, user, args)
         except Exception:
             if settings.USE_SENTRY:
-                sentry_client.captureException()
+                exc_code = sentry_client.captureException()
             else:
                 bot.sendMessage(settings.ADMIN,
                                 "Error occured in update:" +
@@ -112,8 +112,12 @@ def command_handle(bot: Bot, update: Update, sentry_client):
                                 "\n<code>%s</code>" % html.escape(
                                     traceback.format_exc()),
                                 parse_mode='HTML')
+            errmsg = _(MODLOADER.locales["error_occured_please_report"]) % settings.CHAT_LINK
+            if settings.USE_SENTRY:
+                errmsg += _(MODLOADER.locales["sentry_code"]) % exc_code
             reply = core.message(
-                _(MODLOADER.locales["error_occured_please_report"]) % settings.CHAT_LINK, parse_mode="HTML", failed=True)
+                errmsg,
+                parse_mode="HTML", failed=True)
         return send_message(bot, update, reply)
 
 
@@ -122,6 +126,7 @@ def inline_handle(bot: Bot, update: Update):
     args = query.split(" ")[1:]
     user = update.inline_query.from_user
     result = []
+    # Handle normal commands support
     modloader_response = MODLOADER.handle_inline(update)
     if modloader_response:
         for command in modloader_response:
@@ -179,10 +184,18 @@ def inline_handle(bot: Bot, update: Update):
                     description="This command doesnt work in inline mode.",
                     input_message_content=InputTextMessageContent("This command doesnt work in inline mode."),
                 ))
-    update.inline_query.answer(results=result,
-                               switch_pm_text="List commands",
-                               switch_pm_parameter="help",
-                               cache_time=1)
+    # Handle custom inline commands
+    modloader_response = MODLOADER.handle_inline_custom(update)
+    for resp in modloader_response:
+        result += resp(bot, query)
+    result = result[:49]
+    try:
+        update.inline_query.answer(results=result,
+                                   switch_pm_text="List commands",
+                                   switch_pm_parameter="help",
+                                   cache_time=1)
+    except Exception as e:
+        LOGGER.critical(str(e))
     return True
 
 
