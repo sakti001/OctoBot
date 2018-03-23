@@ -18,6 +18,7 @@ def create_poll(mirror_name, mirror_token, upd_queue, modloader):
             try:
                 updates = bot.get_updates(offset=update_id, timeout=1)
                 for update in updates:
+                    update.mirror_name = mirror_name
                     upd_queue.put((bot, update))
                     update_id = update.update_id + 1
             except (telegram.error.NetworkError, ValueError):

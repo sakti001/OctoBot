@@ -8,6 +8,7 @@ import html
 import traceback
 import json
 from uuid import uuid4
+import time
 
 from telegram import (Bot, InlineKeyboardButton, InlineKeyboardMarkup,
                       InlineQueryResultArticle, InlineQueryResultCachedPhoto,
@@ -19,8 +20,7 @@ os.makedirs("plugdata", exist_ok=True)
 import obupdater
 import core
 import settings
-import time
-
+import sentry_support
 
 class OctoBot_PTB(core.OctoBotCore, logging.NullHandler):
 
@@ -84,7 +84,7 @@ class OctoBot_PTB(core.OctoBotCore, logging.NullHandler):
             self.bot.leaveChat(update.message.chat.id)
 
 
-def command_handle(bot: Bot, update: Update, sentry_client):
+def command_handle(bot: Bot, update: Update):
     """
     Handles commands
     """
@@ -102,8 +102,10 @@ def command_handle(bot: Bot, update: Update, sentry_client):
             reply = modloader_response(
                 bot, update, user, args)
         except Exception:
+            errmsg = _(MODLOADER.locales["error_occured_please_report"]) % settings.CHAT_LINK
             if settings.USE_SENTRY:
-                exc_code = sentry_client.captureException()
+                errmsg += _(MODLOADER.locales["sentry_code"]) % sentry_support.catch_exc(extra_context=update.to_dict(),
+                                                                                         user_context=update.message.from_user.to_dict())
             else:
                 bot.sendMessage(settings.ADMIN,
                                 "Error occured in update:" +
@@ -112,9 +114,6 @@ def command_handle(bot: Bot, update: Update, sentry_client):
                                 "\n<code>%s</code>" % html.escape(
                                     traceback.format_exc()),
                                 parse_mode='HTML')
-            errmsg = _(MODLOADER.locales["error_occured_please_report"]) % settings.CHAT_LINK
-            if settings.USE_SENTRY:
-                errmsg += _(MODLOADER.locales["sentry_code"]) % exc_code
             reply = core.message(
                 errmsg,
                 parse_mode="HTML", failed=True)

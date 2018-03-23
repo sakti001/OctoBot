@@ -4,13 +4,11 @@ import html
 import logging
 from obupdater import long_poll, webhooks
 import urllib.parse
-import os
 import settings
 import threading
 import traceback
-import datetime
-import raven
 
+import sentry_support
 
 
 class OBUpdater:
@@ -41,18 +39,6 @@ class OBUpdater:
     def _poll_worker(self):
         while 1:
             bot, update = self.upd_queue.get()
-            if settings.USE_SENTRY:
-                sentry_client = raven.Client(settings.SENTRY_URL,
-                                             refs=[{
-                                             "commit":raven.fetch_git_sha(''.join(os.path.split(os.path.dirname(__file__))[:1])),
-                                             "repository":settings.SENTRY_REPO
-                                             }],
-                                             environment=settings.SENTRY_ENV)
-                sentry_client.user_context(update.to_dict())
-                sentry_client.tags_context({"Captured In": "Worker",
-                                            "Bot": bot.getMe().first_name})
-            else:
-                sentry_client = None
             try:
                 if update.update_id < self.update_id - 1:
                     continue
@@ -64,36 +50,14 @@ class OBUpdater:
                             update.message.reply_to_message.text = update.message.reply_to_message.caption
                     if not update.message.text:
                         update.message.text = ""
-                    if settings.USE_SENTRY:
-                        sentry_client.tags_context({"Captured In": "Message Handle",
-                                                    "Bot": bot.getMe().first_name})
-                        sentry_client.user_context(update.message.from_user.to_dict())
-                        sentry_client.extra_context(update.message.to_dict())
                     if self.message_handle(bot, update):
                         continue
-                    if settings.USE_SENTRY:
-                        sentry_client.tags_context({"Captured In": "Command Handle",
-                                                    "Bot": bot.getMe().first_name})
-                        sentry_client.user_context(update.message.from_user.to_dict())
-                        sentry_client.extra_context(update.message.to_dict())
-                    if self.command_handle(bot, update, sentry_client):
+                    if self.command_handle(bot, update):
                         continue
                 elif update.inline_query:
-                    if settings.USE_SENTRY:
-                        sentry_client.tags_context({"Captured In": "Inline Handle",
-                                                    "Bot": bot.getMe().first_name})
-                        sentry_client.user_context(update.inline_query.from_user.to_dict())
-                        sentry_client.extra_context(update.inline_query.to_dict())
-                    update.inline_query.query = html.unescape(update.inline_query.query.replace("<br/>", "\n"))
-                    update.message = telegram.Message(0, update.inline_query.from_user, datetime.datetime.now(), update.inline_query.from_user)
                     if self.inline_handle(bot, update):
                         continue
                 elif update.callback_query:
-                    if settings.USE_SENTRY:
-                        sentry_client.tags_context({"Captured In": "Callback Query Handle",
-                                                    "Bot": bot.getMe().first_name})
-                        sentry_client.user_context(update.callback_query.from_user.to_dict())
-                        sentry_client.extra_context(update.callback_query.to_dict())
                     if self.inline_kbd_handle(bot, update):
                         continue
                 self.update_handle(bot, update)
@@ -102,7 +66,7 @@ class OBUpdater:
                 self.logger.error(e)
                 try:
                     if settings.USE_SENTRY:
-                        sentry_client.captureException()
+                        sentry_support.catch_exc(update.to_dict())
                     else:
                         bot.sendMessage(
                             settings.ADMIN,
